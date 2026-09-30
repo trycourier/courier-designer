@@ -78,6 +78,10 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   variablesEnabledAtom: "variablesEnabledAtom",
   linkTrackingEnabledAtom: "linkTrackingEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  variableViewModeAtom: "variableViewModeAtom",
+  variableValuesAtom: "variableValuesAtom",
+  sampleDataAtom: "sampleDataAtom",
+  availableVariablesAtom: "availableVariablesAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));
@@ -389,7 +393,9 @@ describe("Inbox Component", () => {
               type: "channel",
               channel: "inbox",
               elements: [
-                { type: "text", content: "\n", text_style: "h2" },
+                // The lifted title, flagged so a preview renders it the way the
+                // send renders a title: twice.
+                { type: "text", content: "\n", text_style: "h2", __previewTitle: true },
                 { type: "text", content: "Existing content" },
               ],
             },
@@ -524,6 +530,52 @@ describe("Inbox Component", () => {
         content: ["new"],
       });
 
+      vi.useRealTimers();
+    });
+
+    it("should not replace the document while a chip inside it is being edited", () => {
+      vi.useFakeTimers();
+      setMockState({
+        templateContent: {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "inbox",
+              elements: [{ type: "text", content: "New content" }],
+            },
+          ],
+        },
+      });
+
+      // A chip is edited in its own span inside the editor, which ProseMirror
+      // does not count as the editor being focused. Replacing the document then
+      // destroys the chip and throws away the keys still being typed.
+      const editorDom = document.createElement("div");
+      const chipSpan = document.createElement("span");
+      chipSpan.setAttribute("contenteditable", "true");
+      chipSpan.tabIndex = 0;
+      editorDom.appendChild(chipSpan);
+      document.body.appendChild(editorDom);
+      chipSpan.focus();
+
+      mockEditorInstance.isFocused = false;
+      (mockEditorInstance as unknown as { view: unknown }).view = { dom: editorDom };
+      (convertElementalToTiptap as Mock).mockReturnValue({ type: "doc", content: ["new"] });
+      (mockEditorInstance.getJSON as Mock).mockReturnValue({ type: "doc", content: ["old"] });
+      (convertTiptapToElemental as Mock).mockImplementation((content: any) =>
+        content && content.content && content.content[0] === "new" ? ["new"] : ["old"]
+      );
+
+      render(<InboxEditorContent />);
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+
+      expect(mockEditorInstance.commands.setContent).not.toHaveBeenCalled();
+
+      (mockEditorInstance as unknown as { view?: unknown }).view = undefined;
+      editorDom.remove();
       vi.useRealTimers();
     });
 

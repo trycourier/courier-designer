@@ -1,3 +1,4 @@
+import { CanvasIssueGutter } from "../../CanvasIssues";
 import type { SlackProps } from "./Slack";
 import { Slack } from "./Slack";
 import { SlackEditor } from "./SlackEditor";
@@ -56,7 +57,7 @@ export const SlackLayout = ({
       render={(props) => {
         return (
           <ChannelRootContainer readOnly={readOnly}>
-            <div className="courier-flex courier-flex-col courier-flex-1">
+            <div className="courier-relative courier-flex courier-flex-col courier-flex-1">
               <SlackEditorContainer>
                 <SlackEditorMain>
                   <SlackEditor
@@ -65,6 +66,7 @@ export const SlackLayout = ({
                   />
                 </SlackEditorMain>
               </SlackEditorContainer>
+              <CanvasIssueGutter channel="slack" enabled={!readOnly} />
             </div>
             {!readOnly && (
               <EditorSidebar>

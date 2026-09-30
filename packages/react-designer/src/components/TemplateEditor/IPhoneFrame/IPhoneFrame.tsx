@@ -11,6 +11,10 @@ export const IPhoneFrame = ({ children }: { children: ReactNode | ReactNode[] })
     <div className="courier-absolute courier-w-0.5 courier-h-[50px] courier-bg-border -courier-left-[2px] courier-top-[245px]" />
     <div className="courier-absolute courier-w-0.5 courier-h-[78px] courier-bg-border -courier-right-[2px] courier-top-[200px]" />
     <div
+      // The bezel is the visible edge of this canvas: the ProseMirror inside it
+      // ends well short of it, and a pill measured from there landed ON the
+      // frame. Slack and MSTeams tag their own cards the same way.
+      data-issue-gutter-edge=""
       className="courier-py-2 courier-border-8 courier-border-b-0 courier-w-[306px] courier-h-[500px] courier-rounded-[40px] courier-rounded-b-none courier-bg-background courier-pb-6 courier-relative"
       style={{
         maskImage: "linear-gradient(180deg, #000 80%, transparent)",

@@ -491,23 +491,24 @@ describe("extractVariablesFromContent", () => {
       expect(result).toEqual([]);
     });
 
-    it("should NOT extract variables starting with digits", () => {
+    // Handlebars' ID grammar takes a leading digit and a hyphen, and both render
+    // at send, so both are names the template really uses.
+    it("extracts a name with a digit or a hyphen, which Handlebars reads", () => {
       const elements: ElementalNode[] = [
         {
           type: "text",
-          content: "Hello {{123user}}, welcome!",
+          content: "Hello {{123user}} and {{user-name}}, welcome!",
         },
       ];
 
-      const result = extractVariablesFromContent(elements);
-      expect(result).toEqual([]);
+      expect(extractVariablesFromContent(elements)).toEqual(["123user", "user-name"]);
     });
 
     it("should NOT extract variables with invalid characters", () => {
       const elements: ElementalNode[] = [
         {
           type: "text",
-          content: "Hello {{user-name}}, welcome!",
+          content: "Hello {{user%name}}, welcome!",
         },
       ];
 
@@ -1299,12 +1300,13 @@ describe("extractVariablesFromContent", () => {
           {
             type: "action",
             content: "View",
-            href: "https://{{subdomain}}.example.com/{{path}}/item?id={{itemId}}&ref={{refCode}}#{{anchor}}",
+            // Not `{{path}}`: `path` is a helper, so the send calls it (F-014).
+            href: "https://{{subdomain}}.example.com/{{section}}/item?id={{itemId}}&ref={{refCode}}#{{anchor}}",
           },
         ];
 
         const result = extractVariablesFromContent(elements);
-        expect(result).toEqual(["anchor", "itemId", "path", "refCode", "subdomain"]);
+        expect(result).toEqual(["anchor", "itemId", "refCode", "section", "subdomain"]);
       });
     });
 
@@ -1516,7 +1518,7 @@ describe("extractVariablesFromContent", () => {
         expect(result).toEqual(["userId", "userName"]);
       });
 
-      it("should skip handlebars helpers and loop refs in html nodes", () => {
+      it("should read helper operands but skip loop refs and triple braces in html nodes", () => {
         const elements: ElementalNode[] = [
           {
             type: "html",
@@ -1528,7 +1530,7 @@ describe("extractVariablesFromContent", () => {
         ];
 
         const result = extractVariablesFromContent(elements);
-        expect(result).toEqual(["data.name"]);
+        expect(result).toEqual(["data.items", "data.name", "data.vip"]);
       });
 
       it("should extract from html nodes alongside other nodes", () => {

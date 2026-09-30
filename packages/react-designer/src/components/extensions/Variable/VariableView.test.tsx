@@ -68,6 +68,8 @@ const createMockEditor = (
           depth: ancestors.length - 1,
           node: (d: number) => makeNode(ancestors[ancestors.length - 1 - d]),
         })),
+        // The chip checks it is still the node at its position before writing.
+        nodeAt: vi.fn(() => makeNode({ typeName: "variable" })),
       },
       selection: { from: 0, to: 0, empty: true },
     },
@@ -91,9 +93,14 @@ const createMockEditor = (
 
 // Create mock node
 const createMockNode = (attrs: { id?: string; isInvalid?: boolean } = {}) => ({
+  type: { name: "variable" },
   attrs: {
     id: attrs.id ?? "",
     isInvalid: attrs.isInvalid ?? false,
+    // An empty chip in these tests is one just inserted by `{{` or a menu, and
+    // that is what opens it: a chip an undo brought back carries `false` and
+    // stays closed.
+    autoEdit: (attrs.id ?? "") === "",
   },
   nodeSize: 1,
 });
@@ -162,33 +169,39 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "invalid name", isInvalid: true });
       render(<VariableView {...props} />);
 
-      // Check that red color is applied to icon
+      // Colour comes from the chip's class now, not a hex on the icon, so the
+      // stylesheet is the only place a chip state is defined.
       const icon = screen.getByTestId("variable-icon");
-      expect(icon).toHaveAttribute("data-color", "#DC2626");
+      expect(icon).not.toHaveAttribute("data-color", "#DC2626");
+      // Amber, not red: a rejected name renders empty rather than failing the send.
+      expect(document.querySelector(".courier-variable-chip-warning")).toBeTruthy();
     });
 
     it("should render with normal styling when isInvalid is false", () => {
       const props = createMockProps({ id: "valid_name", isInvalid: false });
       render(<VariableView {...props} />);
 
-      // Check that warning color is applied (no value set)
+      // A valid chip pins no icon colour: the icon inherits the chip's own,
+      // which CSS owns. Only the invalid state still overrides.
       const icon = screen.getByTestId("variable-icon");
-      expect(icon).toHaveAttribute("data-color", "#B45309");
+      expect(icon).not.toHaveAttribute("data-color");
     });
   });
 
   describe("Truncation", () => {
     it("should limit display width for long variable names", () => {
       const longName = "this_is_a_very_long_variable_name_that_exceeds_limit";
-      const truncatedName = "this_is_a_very_long_vari…"; // MAX_DISPLAY_LENGTH (24) chars + ellipsis
       const props = createMockProps({ id: longName });
       render(<VariableView {...props} />);
 
-      // Editable shows truncated text (JS truncation) with maxWidth CSS limit
+      // The label is no longer cut in JS — the stylesheet wraps it and clamps
+      // to three lines, so the full name is present and readable.
       const editable = screen.getByRole("textbox");
-      expect(editable.textContent).toBe(truncatedName);
-      // Max width should be limited to MAX_DISPLAY_LENGTH (24ch) with CSS variable fallback
-      expect(editable.style.maxWidth).toBe("var(--courier-variable-chip-max-width, 24ch)");
+      expect(editable.textContent).toBe(longName);
+      // The width limit lives on `.courier-variable-chip > span:last-child` in
+      // styles.css, not inline, so the HTML-string chip inherits the same rule
+      // instead of rendering an untruncated label.
+      expect(editable.style.maxWidth).toBe("");
     });
 
     it("should show full name in title for truncated variables", () => {
@@ -246,6 +259,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "valid_name",
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -261,17 +276,35 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "invalid name",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
     it("should delete variable on blur when empty", async () => {
       const mockEditor = createMockEditor();
-      const deleteRangeMock = vi.fn(() => ({ run: vi.fn() }));
-      mockEditor.chain = vi.fn(() => ({
-        focus: vi.fn(() => ({
-          deleteRange: deleteRangeMock,
-        })),
-      }));
+      // Emptied and abandoned: removed as housekeeping, without a history step,
+      // since one taken here wiped the redo stack.
+      const metas: Array<[string, unknown]> = [];
+      const dispatched: Array<[number, number]> = [];
+      const tr = {
+        delete: (from: number, to: number) => {
+          dispatched.push([from, to]);
+          return tr;
+        },
+        setMeta: (key: string, value: unknown) => {
+          metas.push([key, value]);
+          return tr;
+        },
+      };
+      (mockEditor.state as unknown as { tr: unknown }).tr = tr;
+      (mockEditor.state.doc as unknown as { nodeAt: unknown }).nodeAt = () => ({
+        type: { name: "variable" },
+        attrs: {},
+        nodeSize: 1,
+      });
+      (mockEditor as unknown as { view: unknown }).view = { dispatch: vi.fn() };
+      (mockEditor as unknown as { isDestroyed: boolean }).isDestroyed = false;
 
       const props = createMockProps({ id: "test" }, { editor: mockEditor as any });
       render(<VariableView {...props} />);
@@ -290,7 +323,8 @@ describe("VariableView", () => {
       clearContentEditable(editable);
       fireEvent.blur(editable);
 
-      expect(mockEditor.chain).toHaveBeenCalled();
+      expect(dispatched).toHaveLength(1);
+      expect(metas).toContainEqual(["addToHistory", false]);
     });
 
     it("should confirm edit on Enter key", async () => {
@@ -305,6 +339,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "test_name",
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -349,6 +385,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "a".repeat(50),
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
   });
@@ -451,6 +489,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "user.firstName",
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -466,6 +506,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "invalid name",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -481,6 +523,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: ".invalid",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -496,6 +540,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "user..name",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
   });

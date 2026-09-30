@@ -1,3 +1,4 @@
+import { CanvasIssueGutter } from "../../CanvasIssues";
 import type { MSTeamsProps } from "./MSTeams";
 import { MSTeams } from "./MSTeams";
 import { MSTeamsEditor } from "./MSTeamsEditor";
@@ -56,7 +57,7 @@ export const MSTeamsLayout = ({
       render={(props) => {
         return (
           <ChannelRootContainer readOnly={readOnly}>
-            <div className="courier-flex courier-flex-col courier-flex-1">
+            <div className="courier-relative courier-flex courier-flex-col courier-flex-1">
               <MSTeamsEditorContainer>
                 <MSTeamsEditorMain>
                   <MSTeamsEditor
@@ -65,6 +66,7 @@ export const MSTeamsLayout = ({
                   />
                 </MSTeamsEditorMain>
               </MSTeamsEditorContainer>
+              <CanvasIssueGutter channel="msteams" enabled={!readOnly} />
             </div>
             {!readOnly && (
               <EditorSidebar>

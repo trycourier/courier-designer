@@ -1,3 +1,4 @@
+import { CanvasIssueGutter } from "../../CanvasIssues";
 import type { SMSProps } from "./SMS";
 import { SMS } from "./SMS";
 import { SMSEditor } from "./SMSEditor";
@@ -31,11 +32,12 @@ export const SMSLayout = ({
       colorScheme={colorScheme}
       readOnly={readOnly}
       render={(props) => (
-        <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
+        <div className="courier-relative courier-flex courier-flex-col courier-items-center courier-py-8">
           <SMSEditor
             key={`sms-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
             {...props}
           />
+          <CanvasIssueGutter channel="sms" mode="summary" enabled={!readOnly} />
         </div>
       )}
       {...rest}

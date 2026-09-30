@@ -46,6 +46,10 @@ export const InboxEditor = ({
 
   return (
     <div
+      // The bezel is the visible edge of this canvas: the ProseMirror inside it
+      // ends well short of it, and a pill measured from there landed ON the
+      // frame. Slack and MSTeams tag their own cards the same way.
+      data-issue-gutter-edge=""
       className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
       style={{
         maskImage: "linear-gradient(180deg, #000 80%, transparent)",

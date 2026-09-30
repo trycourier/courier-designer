@@ -179,7 +179,10 @@ For components that render in email:
   `e2e-test` job in `.github/workflows/check-pull-request.yml` is gated behind
   `if: false` (C-20083): ~20 min per PR and flaky, so it blocked merges without
   catching real regressions. To re-enable, remove the `if: false`.
-- Test files colocated with source files (e.g., `Component.test.tsx`)
+- Test files colocated with source files (e.g., `Component.test.tsx`), except
+  where a directory has enough of them to drown its source: `lib/utils/handlebars`
+  keeps its tests and fixtures under `__tests__/`, which `tsconfig.build.json`
+  excludes from the published `dist`
 - Write tests for utility functions and component behavior
 - Test email rendering compatibility for email-specific features
 

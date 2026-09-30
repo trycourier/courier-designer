@@ -36,3 +36,28 @@ describe("public API surface", () => {
     }
   });
 });
+
+/**
+ * Helpers whose whole point is that a host applies the same rule we do. One
+ * documented as shared but missing from the root is a copy waiting to drift:
+ * Studio had written its own `{{set}}` scope rule because this was not exported.
+ */
+describe("helpers a host has to share with us", () => {
+  it("are all reachable from the package root", () => {
+    for (const name of [
+      "setDefinedNamesInPart",
+      "contextDepthOf",
+      "severityForCode",
+      "isParseableJs",
+      "stripWhitespaceControl",
+      "isAcceptedVariable",
+      "collectTemplateIssues",
+      "variableReferencesIn",
+      "renderVariablesInTextString",
+      "renderVariablesInHtmlString",
+    ]) {
+      expect(publicApi, name).toHaveProperty(name);
+      expect(typeof (publicApi as Record<string, unknown>)[name], name).toBe("function");
+    }
+  });
+});

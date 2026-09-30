@@ -27,6 +27,8 @@ import {
   List,
   ListItem,
   Paragraph,
+  HandlebarsExpressionNode,
+  HandlebarsSafeTypography,
   Placeholder,
   Selection,
   StarterKit,
@@ -191,7 +193,16 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     }).configure({
       types: ["paragraph", "heading"],
     }),
-    Typography,
+    // The five rules that can corrupt a handlebars expression are turned off
+    // here and re-added, guarded, by HandlebarsSafeTypography.
+    Typography.configure({
+      openDoubleQuote: false,
+      closeDoubleQuote: false,
+      openSingleQuote: false,
+      closeSingleQuote: false,
+      ellipsis: false,
+    }),
+    HandlebarsSafeTypography,
     Placeholder.configure({
       includeChildren: true,
       showOnlyCurrent: true,
@@ -204,10 +215,15 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
       width: 2,
       class: "ProseMirror-dropcursor courier-border-black",
     }),
-    VariableNode,
+    // Configured, not shared: TipTap keeps an extension's storage on the
+    // extension instance, so two editors built from the same one share it — and
+    // the variable view mode lives there. Preview & Test leaving a tab in
+    // `wysiwyg` put every other editor in the tab into preview too.
+    VariableNode.configure(),
+    HandlebarsExpressionNode.configure(),
     // Always use VariableInputRule to create chips - autocomplete is shown inside the chip
-    VariableInputRule,
-    VariablePaste,
+    VariableInputRule.configure(),
+    VariablePaste.configure(),
     FixedChannelPaste,
     FixedChannelSelection,
   ];

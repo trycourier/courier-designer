@@ -1,104 +1,153 @@
 import { cn } from "@/lib";
+import {
+  availableVariablesAtom,
+  disableVariablesAutocompleteAtom,
+  variableValidationAtom,
+} from "@/components/TemplateEditor/store";
+import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
+import { CONTEXT_BLOCKS } from "@/lib/utils/handlebars/blockContext";
+import { segmentText, type HandlebarsSegment } from "@/lib/utils/handlebars/segmentText";
+import { isAcceptedVariable } from "@/lib/utils/handlebars/variableRules";
 import { type NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, {
   useCallback,
+  useMemo,
   useRef,
   useEffect,
   useLayoutEffect,
   useState,
   type KeyboardEvent,
 } from "react";
-import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
-import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
+import { HandlebarsExpressionIcon } from "../HandlebarsExpression/HandlebarsExpressionIcon";
 import { actionLookClassName } from "../Button/actionLook";
 import type { IActionButtonStyle } from "@/types/elemental.types";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
-type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
+/**
+ * A row's labels live in attributes, not in the document, so the row draws them
+ * itself rather than letting the chip node views do it.
+ *
+ * It used to split them on its own `{{([^}]+)}}` regex, which knows nothing
+ * about handlebars: `{{#if x}}` came out as raw text beside the chips, and the
+ * variable pills it did draw were never put to the host's validator — so a name
+ * the host rejects drew as a valid chip here while the sidebar drew it amber.
+ * `segmentText` is what every other surface splits with.
+ */
+interface LabelPart {
+  segment: HandlebarsSegment;
+  /** Inside a block opened earlier in this same label. */
+  inBlockScope: boolean;
+  /** Blocks before it that rebase the context — `#each` and `#with`. */
+  contextDepth: number;
+}
 
-const parseLabel = (label: string): LabelPart[] => {
-  if (!label) return [];
+function parseLabel(label: string): LabelPart[] {
+  const open: boolean[] = [];
 
-  const parts: LabelPart[] = [];
-  const variableRegex = /\{\{([^}]+)\}\}/g;
-  let lastIndex = 0;
-  let match;
+  return segmentText(label).map((segment) => {
+    const part: LabelPart = {
+      segment,
+      inBlockScope: open.length > 0,
+      contextDepth: open.filter(Boolean).length,
+    };
 
-  variableRegex.lastIndex = 0;
-
-  while ((match = variableRegex.exec(label)) !== null) {
-    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
-      continue;
+    if (segment.type === "expression") {
+      if (segment.kind === "blockOpen" || segment.kind === "blockInverseOpen") {
+        open.push(CONTEXT_BLOCKS.has(segment.name));
+      } else if (segment.kind === "blockClose") {
+        open.pop();
+      }
     }
 
-    if (match.index > lastIndex) {
-      parts.push({
-        type: "text",
-        content: label.substring(lastIndex, match.index),
-      });
-    }
+    return part;
+  });
+}
 
-    const variableName = match[1].trim();
-    if (isValidVariableName(variableName)) {
-      parts.push({
-        type: "variable",
-        name: variableName,
-      });
-    } else {
-      parts.push({
-        type: "text",
-        content: match[0],
-      });
-    }
+/** The same verdict the sidebar's chips get, for a label drawn as markup. */
+function useVariableVerdict() {
+  const variableValidation = useAtomValue(variableValidationAtom);
+  const availableVariables = useAtomValue(availableVariablesAtom);
+  const disableAutocomplete = useAtomValue(disableVariablesAutocompleteAtom);
 
-    lastIndex = match.index + match[0].length;
-  }
+  const available = useMemo(
+    () =>
+      disableAutocomplete || !availableVariables || Object.keys(availableVariables).length === 0
+        ? []
+        : getFlattenedVariables(availableVariables),
+    [availableVariables, disableAutocomplete]
+  );
 
-  if (lastIndex < label.length) {
-    parts.push({
-      type: "text",
-      content: label.substring(lastIndex),
-    });
-  }
-
-  return parts;
-};
+  return useCallback(
+    (part: LabelPart & { segment: { type: "variable"; name: string } }) =>
+      isAcceptedVariable(
+        part.segment.name,
+        {
+          available,
+          inBlockScope: part.inBlockScope,
+          inLoop: false,
+          contextDepth: part.contextDepth,
+        },
+        variableValidation?.validate
+      ),
+    [available, variableValidation]
+  );
+}
 
 const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
-  const variableValues = useAtomValue(variableValuesAtom);
+  const accepts = useVariableVerdict();
 
   return (
     <>
       {parts.map((part, index) => {
-        if (part.type === "text") {
-          return <span key={index}>{part.content}</span>;
+        const { segment } = part;
+        if (segment.type === "text") {
+          return <span key={index}>{segment.text}</span>;
         }
 
-        const value = variableValues[part.name];
-        const bgColor = value ? "#EFF6FF" : "#FFFBEB";
-        const borderColor = value ? "#BFDBFE" : "#FDE68A";
-        const iconColor = value ? undefined : "#B45309";
+        if (segment.type === "expression") {
+          return (
+            <span
+              key={index}
+              className={cn(
+                "courier-handlebars-chip",
+                `courier-handlebars-chip-${segment.kind}`,
+                segment.isInvalid && "courier-handlebars-chip-invalid",
+                !segment.isInvalid &&
+                  segment.severity === "warning" &&
+                  "courier-handlebars-chip-warning"
+              )}
+              data-handlebars-kind={segment.kind}
+            >
+              <span>
+                <HandlebarsExpressionIcon />
+              </span>
+              <span>{segment.raw.replace(/^\{\{~?|~?\}\}$/g, "")}</span>
+            </span>
+          );
+        }
 
         return (
+          // `courier-variable-chip` and nothing else: this pill used to carry
+          // its own palette and geometry, which made it a chip no change to the
+          // real chip could reach. The icon needs its own span because the
+          // stylesheet addresses the two children by position.
           <span
             key={index}
-            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button"
-            style={{
-              backgroundColor: bgColor,
-              borderColor: borderColor,
-              color: "#000000",
-            }}
+            className={cn(
+              "courier-variable-chip courier-variable-node",
+              !accepts(part as LabelPart & { segment: { type: "variable"; name: string } }) &&
+                "courier-variable-chip-warning"
+            )}
           >
-            <VariableChipIcon color={iconColor} />
-            <span className="courier-truncate courier-min-w-0" style={{ color: "#000000" }}>
-              {part.name}
-              {value ? `="${value}"` : ""}
+            <span>
+              <VariableChipIcon />
             </span>
+            <span>{segment.name}</span>
           </span>
         );
       })}
@@ -131,10 +180,12 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   const isUserEditingRef = useRef(false);
   const [isFocused, setIsFocused] = useState(false);
   const parts = parseLabel(label);
-  const hasVariables = parts.some((p) => p.type === "variable");
+  // An expression counts too: a label holding only `{{#if x}}` used to have no
+  // variable in it, so the row stayed in raw-text mode and drew the braces.
+  const hasChips = parts.some((part) => part.segment.type !== "text");
 
-  // Only show variable chips when not focused - allow editing while focused
-  const showVariableChips = hasVariables && !isFocused;
+  // Only show chips when not focused - allow editing while focused
+  const showVariableChips = hasChips && !isFocused;
 
   // Clear leftover text nodes synchronously when switching to variable chip mode
   // useLayoutEffect runs before browser paint, preventing visual flicker

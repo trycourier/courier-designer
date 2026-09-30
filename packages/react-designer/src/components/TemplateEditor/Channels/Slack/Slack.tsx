@@ -1,3 +1,4 @@
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
@@ -49,6 +50,7 @@ import type { TemplateEditorProps } from "../../TemplateEditor";
 import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { useSyncEditorItems } from "../../hooks/useSyncEditorItems";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 type UniqueIdentifier = string | number;
 
@@ -154,7 +156,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
       setTimeout(() => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
+        if (!editorHoldsFocus(editor) && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -182,6 +184,7 @@ export interface SlackProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -348,6 +351,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -573,6 +577,8 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "slack");
+
     const content = useMemo(() => {
       const element = getOrCreateSlackElement(value);
 
@@ -589,8 +595,8 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "slack" });
-    }, [value, previewLocale]);
+      return convertElementalToTiptap(elementalForConversion, { channel: "slack", previewData });
+    }, [value, previewLocale, previewData]);
 
     return (
       <MainLayout

@@ -1,3 +1,4 @@
+import { segmentText } from "@/lib/utils/handlebars/segmentText";
 import type { Node as ProseMirrorNode, Schema } from "@tiptap/pm/model";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 
@@ -36,17 +37,31 @@ export function extractButtonTextContent(node: ProseMirrorNode): string {
       textContent += child.text;
     } else if (child.type.name === "variable") {
       textContent += child.attrs?.id ? `{{${child.attrs.id}}}` : "";
+    } else if (child.type.name === "handlebarsExpression") {
+      // Verbatim, like everywhere else an expression is serialized.
+      textContent += typeof child.attrs?.raw === "string" ? child.attrs.raw : "";
     }
   });
   return textContent;
 }
 
-export function syncButtonContentToLabelAttr(state: EditorState): Transaction | null {
+/**
+ * Push a labelled node's inline content back into its `label` attribute.
+ *
+ * `nodeName` because the Inbox action is the same shape and needs the same
+ * plugin: without it, typing on the canvas changed the content and left the
+ * attribute stale, so the sidebar — which reads the attribute — kept showing
+ * the label as it was before the author typed.
+ */
+export function syncButtonContentToLabelAttr(
+  state: EditorState,
+  nodeName = "button"
+): Transaction | null {
   const tr = state.tr;
   let modified = false;
 
   state.doc.descendants((node, pos) => {
-    if (node.type.name === "button") {
+    if (node.type.name === nodeName) {
       const textContent = extractButtonTextContent(node);
 
       if (textContent !== node.attrs.label) {
@@ -64,20 +79,40 @@ export function syncButtonContentToLabelAttr(state: EditorState): Transaction | 
 
 function parseLabelToNodes(schema: Schema, label: string): ProseMirrorNode[] {
   const nodes: ProseMirrorNode[] = [];
-  const variableRegex = /\{\{([^}]*)\}\}/g;
-  let lastIndex = 0;
-  let match;
 
-  while ((match = variableRegex.exec(label)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(schema.text(label.substring(lastIndex, match.index)));
+  // Same segmentation as everywhere else, so a helper in a label becomes an
+  // expression node rather than a variable named `capitalize data.name`.
+  for (const segment of segmentText(label)) {
+    const source = label.slice(segment.start, segment.end);
+
+    if (segment.type === "text") {
+      if (source) nodes.push(schema.text(source));
+      continue;
     }
-    const variableName = match[1].trim();
-    if (schema.nodes.variable) {
-      nodes.push(schema.nodes.variable.create({ id: variableName, isInvalid: false }));
+
+    if (segment.type === "variable") {
+      if (schema.nodes.variable && !segment.isInvalid) {
+        nodes.push(schema.nodes.variable.create({ id: segment.name, isInvalid: false }));
+      } else {
+        nodes.push(schema.text(source));
+      }
+      continue;
     }
-    lastIndex = variableRegex.lastIndex;
+
+    if (schema.nodes.handlebarsExpression) {
+      nodes.push(
+        schema.nodes.handlebarsExpression.create({
+          raw: source,
+          kind: segment.kind,
+          name: segment.name,
+          isInvalid: segment.isInvalid,
+        })
+      );
+    } else {
+      nodes.push(schema.text(source));
+    }
   }
+  const lastIndex = label.length;
 
   if (lastIndex < label.length) {
     nodes.push(schema.text(label.substring(lastIndex)));
@@ -86,13 +121,20 @@ function parseLabelToNodes(schema: Schema, label: string): ProseMirrorNode[] {
   return nodes;
 }
 
+/** Nodes that carry a label attribute over their own inline content. */
+const LABELLED_BUTTON_NODES = new Set(["button", "inboxAction"]);
+
 export function updateButtonLabelAndContent(
   tr: Transaction,
   buttonPos: number,
   newLabel: string
 ): boolean {
   const node = tr.doc.nodeAt(buttonPos);
-  if (!node || node.type.name !== "button") {
+  // The Inbox action is the same shape — a `label` attribute over inline
+  // content — and the Inbox sidebar writes its labels through here. Refusing
+  // anything but the email button meant typing a label in that sidebar changed
+  // nothing on the canvas.
+  if (!node || !LABELLED_BUTTON_NODES.has(node.type.name)) {
     return false;
   }
 

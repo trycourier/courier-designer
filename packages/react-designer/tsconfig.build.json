@@ -6,6 +6,8 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "**/__tests__/**",
+    "**/__fixtures__/**"
   ]
 }

@@ -1,5 +1,7 @@
 import { Node, mergeAttributes } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { syncButtonContentToLabelAttr } from "../Button/buttonUtils";
 import { InboxActionComponentNode } from "./InboxActionComponent";
 import { defaultInboxActionProps, type InboxActionProps } from "./InboxAction.types";
 import { conditionalAttribute } from "../shared/conditionalAttribute";
@@ -35,9 +37,20 @@ export { defaultInboxActionProps };
 export const InboxAction = Node.create({
   name: "inboxAction",
   group: "block",
-  content: "(text | variable)*",
+  // `handlebarsExpression` belongs here for the same reason it belongs in the
+  // email button: the sidebar writes a label as nodes, and a node the schema
+  // refuses does not fail — ProseMirror fits it in wherever it IS legal, which
+  // put every `{{#if …}}` typed in the sidebar into a NEW paragraph after the
+  // action and left the action itself unchanged.
+  content: "(text | variable | handlebarsExpression)*",
   draggable: true,
-  selectable: true,
+  // Same as the email button, and for the same reason: a selectable node takes
+  // a NODE selection on click, so clicking the label put the caret nowhere
+  // inside it and the next keystroke went wherever the document selection
+  // happened to be. `isolating` keeps an edit at either end from merging the
+  // action into the block beside it.
+  selectable: false,
+  isolating: true,
 
   addAttributes() {
     return {
@@ -87,5 +100,21 @@ export const InboxAction = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(InboxActionComponentNode);
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("syncInboxActionContentToLabel"),
+        // The sidebar reads the `label` ATTRIBUTE, and typing on the canvas only
+        // changes the inline content — so without this the sidebar went on
+        // showing the label as it was before the author touched the button. The
+        // email button has carried the same plugin from the start.
+        appendTransaction: (transactions, _oldState, newState) =>
+          transactions.some((tr) => tr.docChanged)
+            ? syncButtonContentToLabelAttr(newState, "inboxAction")
+            : null,
+      }),
+    ];
   },
 });
