@@ -3,6 +3,7 @@ import { convertElementsArrayToTiptapNodes } from "@/lib/utils/convertElementalT
 import { cn } from "@/lib/utils";
 import { Color } from "@/components/extensions/Color/Color";
 import { HandlebarsExpressionNode } from "@/components/extensions/HandlebarsExpression";
+import { InlineImage } from "@/components/extensions/InlineImage";
 import { VariableNode, VariableInputRule, VariablePaste } from "@/components/extensions/Variable";
 import { setVariableViewMode } from "@/components/extensions/Variable/variable-storage.utils";
 import { segmentText } from "@/lib/utils/handlebars/segmentText";
@@ -193,6 +194,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
       // other editor in the tab into preview, including the /localize cells.
       VariableNode.configure(),
       HandlebarsExpressionNode.configure(),
+      InlineImage,
       VariableInputRule.configure(),
       VariablePaste.configure(),
       ...(placeholder
