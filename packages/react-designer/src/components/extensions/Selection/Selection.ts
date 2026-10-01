@@ -43,6 +43,7 @@ export const Selection = Extension.create<SelectionOptions>({
           "customCode",
           "jsonnet",
           "column",
+          "group",
           "list",
         ],
         attributes: {

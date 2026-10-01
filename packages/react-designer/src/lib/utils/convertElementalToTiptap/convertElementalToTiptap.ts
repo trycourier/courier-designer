@@ -5,6 +5,7 @@ import type {
   ElementalContent,
   ElementalTextContentNode,
   ElementalImageTextContent,
+  ElementalGroupNode,
   TiptapDoc,
 } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
@@ -1224,171 +1225,28 @@ export function convertElementalToTiptap(
         ];
 
       case "group": {
-        // Group in Elemental maps to column in TipTap
-        // Count the number of elements to determine columns
-        const columnsCount = node.elements ? node.elements.length : 2;
-
-        // Parse padding from "6px 0px" format
-        let paddingVertical = 0;
-        let paddingHorizontal = 0;
-        if (node.padding) {
-          const paddingParts = node.padding.split(" ");
-          paddingVertical = parseInt(paddingParts[0], 10) || 0;
-          paddingHorizontal = parseInt(paddingParts[1] || paddingParts[0], 10) || 0;
-        }
-
-        // Parse border properties
-        let borderWidth = 0;
-        let borderRadius = 0;
-        let borderColor = "transparent";
-        if (node.border) {
-          if (node.border.size) {
-            borderWidth = parseInt(node.border.size, 10) || 0;
-          }
-          if (node.border.radius !== undefined) {
-            borderRadius = node.border.radius;
-          }
-          if (node.border.color) {
-            borderColor = node.border.color;
-          }
-        }
-
-        // Background color
-        const backgroundColor = node.background_color || "transparent";
-
-        // Generate a unique ID for this column
-        const columnId = `node-${uuidv4()}`;
-
-        // Calculate equal width for each cell
-        const cellWidth = 100 / columnsCount;
-
-        // Create cells from the elements in the group
-        const cells = node.elements
-          ? node.elements.map((element, index) => {
-              // Check if this is a placeholder text element (empty cell marker)
-              const isPlaceholder =
-                element.type === "text" &&
-                "content" in element &&
-                element.content?.trim() === "Drag and drop content blocks" &&
-                element.align === "left";
-
-              // If it's a placeholder, create an empty cell
-              if (isPlaceholder) {
-                return {
-                  type: "columnCell",
-                  attrs: {
-                    id: `cell-${uuidv4()}`,
-                    index,
-                    columnId,
-                    isEditorMode: false,
-                    width: cellWidth,
-                  },
-                  content: [],
-                };
-              }
-
-              // Check if this is a nested group (used to represent multiple elements in one cell)
-              let cellContent: TiptapNode[];
-              if (element.type === "group" && element.elements) {
-                // Unwrap nested group elements directly into the cell
-                cellContent = element.elements.flatMap(convertNode) as TiptapNode[];
-              } else {
-                // Convert single element to TipTap nodes
-                cellContent = convertNode(element) as TiptapNode[];
-              }
-
-              // If the element converts to nothing, use an empty cell
-              const content =
-                cellContent.length > 0
-                  ? cellContent
-                  : [
-                      {
-                        type: "paragraph",
-                        attrs: {
-                          textAlign: "left",
-                          id: `node-${uuidv4()}`,
-                        },
-                        content: [],
-                      },
-                    ];
-
-              return {
-                type: "columnCell",
-                attrs: {
-                  id: `cell-${uuidv4()}`,
-                  index,
-                  columnId,
-                  isEditorMode: cellContent.length > 0,
-                  width: cellWidth,
-                },
-                content,
-              };
-            })
-          : [
-              // No elements - create empty cells (2 columns at 50% each)
-              {
-                type: "columnCell",
-                attrs: {
-                  id: `cell-${uuidv4()}`,
-                  index: 0,
-                  columnId,
-                  isEditorMode: false,
-                  width: 50,
-                },
-                content: [
-                  {
-                    type: "paragraph",
-                    attrs: {
-                      textAlign: "left",
-                      id: `node-${uuidv4()}`,
-                    },
-                    content: [],
-                  },
-                ],
-              },
-              {
-                type: "columnCell",
-                attrs: {
-                  id: `cell-${uuidv4()}`,
-                  index: 1,
-                  columnId,
-                  isEditorMode: false,
-                  width: 50,
-                },
-                content: [
-                  {
-                    type: "paragraph",
-                    attrs: {
-                      textAlign: "left",
-                      id: `node-${uuidv4()}`,
-                    },
-                    content: [],
-                  },
-                ],
-              },
-            ];
-
+        // The send flattens a group into its parent (repeating it per `loop`
+        // item), so it stays a group here — never a column layout.
+        const {
+          type: _type,
+          elements = [],
+          loop,
+          if: condition,
+          locales,
+          ...elementalProps
+        } = node as ElementalGroupNode & Record<string, unknown>;
+        void _type;
         return [
           {
-            type: "column",
+            type: "group",
             attrs: {
-              id: columnId,
-              columnsCount: Math.min(Math.max(columnsCount, 1), 4), // Clamp between 1-4
-              paddingVertical,
-              paddingHorizontal,
-              backgroundColor,
-              borderWidth,
-              borderRadius,
-              borderColor,
-              ...(node.locales && { locales: node.locales }),
-              ...(node.if !== undefined && { if: node.if }),
+              id: `node-${uuidv4()}`,
+              ...(loop && { loop }),
+              ...(condition !== undefined && { if: condition }),
+              ...(locales && { locales }),
+              ...(Object.keys(elementalProps).length > 0 && { elementalProps }),
             },
-            content: [
-              {
-                type: "columnRow",
-                content: cells,
-              },
-            ],
+            content: elements.flatMap(convertNode) as TiptapNode[],
           },
         ];
       }

@@ -282,6 +282,7 @@ export type BlockElementType =
   | "customCode"
   | "jsonnet"
   | "column"
+  | "group"
   | "blockquote"
   | "list";
 
@@ -433,6 +434,7 @@ export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
   "divider",
   "button",
   "column",
+  "group",
   "customCode",
 ];
 

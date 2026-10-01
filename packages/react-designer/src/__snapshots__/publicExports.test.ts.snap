@@ -99,6 +99,7 @@ exports[`public API surface > should export a stable set of named symbols from t
   "emailFontFamilyAtom",
   "extractErrorMessage",
   "extractExistingLocales",
+  "extractLoopShapes",
   "extractTextFields",
   "extractVariablesFromHtmlString",
   "formatPaddingWithBrandHorizontal",

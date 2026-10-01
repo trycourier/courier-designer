@@ -20,6 +20,7 @@ const BLOCK_LABELS: Record<string, string> = {
   customCode: "HTML",
   jsonnet: "Jsonnet",
   column: "Column layout",
+  group: "Group",
   blockquote: "Blockquote",
 };
 

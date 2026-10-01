@@ -274,6 +274,7 @@ export const useBlockConfig = (): UseBlockConfigResult => {
         customCode: "customCode",
         jsonnet: "jsonnet",
         column: "column",
+        group: "group",
         blockquote: "blockquote",
         list: "list",
       };
