@@ -35,14 +35,13 @@ interface MonacoCodeEditorProps {
 
 const GENERIC_VALIDATION_ERROR = "This HTML didn't pass validation.";
 
-// Outlook conditional comments: <!--[if mso]>, <!--[if gte mso 9]>, <!--[if !mso]><!-->
-const MSO_CONDITIONAL_PATTERN = /<!--\[if\s[^\]]*\bmso\b[^\]]*\]>/i;
-
 // Handlebars comments ({{!-- … --}}, {{! … }}) never render.
 const stripHandlebarsComments = (code: string) =>
   code.replace(/\{\{!--[\s\S]*?--\}\}/g, "").replace(/\{\{![\s\S]*?\}\}/g, "");
 
-// Only markup can unbalance brackets and tags, so leave out what isn't markup: comments,
+// Only markup can unbalance brackets and tags, so leave out what isn't markup: comments
+// (including Outlook conditionals like <!--[if mso]> … <![endif]-->, which are ordinary
+// email HTML and must save as written),
 // every Handlebars expression (partials `{{> name}}`, and helpers like
 // `{{#if (condition data.n ">" 5)}}` whose string arguments hold brackets), and the bodies
 // of <style> and <script>, where ">" is a CSS combinator or a JS operator.
@@ -73,7 +72,6 @@ function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: num
 /**
  * Returns the reasons HTML can't be saved, using Monaco's markers and DOMParser.
  * An empty array means the code is valid. Checks for:
- * - Outlook conditional comments (unsupported)
  * - Monaco language service errors
  * - Incomplete/malformed tags
  * - Mismatched angle brackets
@@ -88,13 +86,6 @@ export const getHTMLValidationErrors = (
 
   const model = editor.getModel();
   if (!model) return [];
-
-  // Unsupported by policy, even when the conditional markup is otherwise well formed.
-  if (MSO_CONDITIONAL_PATTERN.test(stripHandlebarsComments(code))) {
-    return [
-      "Outlook conditional comments (<!--[if mso]> … <![endif]-->) aren't supported in HTML blocks. Remove them, keeping only the markup for non-Outlook clients.",
-    ];
-  }
 
   // Get validation markers from Monaco's HTML language service
   const markers = monaco.editor.getModelMarkers({ resource: model.uri });
