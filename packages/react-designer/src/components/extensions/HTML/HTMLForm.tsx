@@ -11,6 +11,11 @@ import { htmlSchema } from "./HTML.types";
 import { MonacoCodeEditor } from "./MonacoCodeEditor";
 import { ExpandIcon, RightToLineIcon } from "@/components/ui-kit/Icon";
 import { useCallback } from "react";
+import { AlertTriangle } from "lucide-react";
+import {
+  findOutlookConditionals,
+  OUTLOOK_CONDITIONALS_STRIPPED_MESSAGE,
+} from "@/lib/utils/outlookConditionals";
 import { useAtom } from "jotai";
 import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
 import { ConditionsSection } from "../../ui/Conditions";
@@ -148,6 +153,21 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                     data-testid="html-validation-errors"
                     className="courier-flex-shrink-0 courier-whitespace-pre-line"
                   />
+                  {findOutlookConditionals(field.value).length > 0 && (
+                    <div
+                      data-testid="html-outlook-conditionals-warning"
+                      className="courier-flex courier-flex-shrink-0 courier-items-start courier-gap-2 courier-rounded-md courier-border courier-border-amber-200 courier-bg-amber-50 courier-p-3 dark:courier-border-amber-700/40 dark:courier-bg-amber-950/30"
+                    >
+                      {/* Amber 50/200/600/800 are the canvas gutter's warning palette (CanvasIssueGutter). */}
+                      <AlertTriangle className="courier-mt-0.5 courier-h-4 courier-w-4 courier-flex-shrink-0 courier-text-amber-600 dark:courier-text-amber-400" />
+                      <p className="courier-text-xs courier-text-amber-800 dark:courier-text-amber-200">
+                        <span className="courier-font-medium courier-issue-label-warning">
+                          Warning:
+                        </span>{" "}
+                        {OUTLOOK_CONDITIONALS_STRIPPED_MESSAGE}
+                      </p>
+                    </div>
+                  )}
                 </FormItem>
               )}
             />

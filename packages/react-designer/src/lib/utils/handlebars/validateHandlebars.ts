@@ -42,7 +42,12 @@ export type HandlebarsIssueCode =
    * blocks. It is here because the chips and the issue list must speak one
    * vocabulary; see `rejectedVariablesIn`.
    */
-  | "rejected-variable";
+  | "rejected-variable"
+  /**
+   * Not handlebars: an HTML block holds an Outlook conditional comment, which the
+   * send's sanitizer currently removes (C-21354). The email still delivers.
+   */
+  | "outlook-conditional-stripped";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;

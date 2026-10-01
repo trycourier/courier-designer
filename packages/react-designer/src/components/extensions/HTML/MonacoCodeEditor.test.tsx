@@ -463,20 +463,16 @@ describe("MonacoCodeEditor", () => {
       );
     };
 
-    it("explains that Outlook conditional comments are unsupported", () => {
-      const errors = validate(sup779Html);
-
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("Outlook conditional comments");
+    it("accepts SHI's SUP-779 snippet with its Outlook conditionals", () => {
+      expect(validate(sup779Html)).toEqual([]);
     });
 
-    it("reports the conditional error instead of the bracket and tag counts it causes", () => {
-      const errors = validate(
-        "<!--[if mso]><table><![endif]--><!--[if !mso]><!--><table><!--<![endif]--></table>"
-      );
-
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("Outlook conditional comments");
+    it("accepts conditional branches that each open the same tag", () => {
+      expect(
+        validate(
+          "<!--[if mso]><table><![endif]--><!--[if !mso]><!--><table><!--<![endif]--></table>"
+        )
+      ).toEqual([]);
     });
 
     it("keeps accepting plain comments and handlebars", () => {
@@ -551,10 +547,11 @@ describe("MonacoCodeEditor", () => {
       });
       expect(onValidationErrors).toHaveBeenLastCalledWith([], { edited: false });
 
-      model._setCurrentValue(sup779Html);
+      const unclosed = "<table><tr><td>x</td></tr>";
+      model._setCurrentValue(unclosed);
       act(() => {
         mockEditor._fireContentChange();
-        onChangeCallback?.(sup779Html);
+        onChangeCallback?.(unclosed);
       });
       await act(async () => {
         vi.advanceTimersByTime(700);
@@ -562,7 +559,7 @@ describe("MonacoCodeEditor", () => {
 
       expect(onSave).not.toHaveBeenCalled();
       expect(onValidationErrors).toHaveBeenLastCalledWith(
-        [expect.stringContaining("Outlook conditional comments")],
+        ["<table> has 1 opening tag but 0 closing tags."],
         { edited: true }
       );
     });
