@@ -1,4 +1,8 @@
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import {
+  findOutlookConditionals,
+  OUTLOOK_CONDITIONALS_STRIPPED_MESSAGE,
+} from "@/lib/utils/outlookConditionals";
 import { rejectedVariablesIn } from "./rejectedVariables";
 import { scanHandlebars } from "./scanHandlebars";
 import type { HostVariableValidator } from "./variableRules";
@@ -74,6 +78,9 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   // The host's own judgement, not handlebars': the send compiles and delivers
   // an empty string where the value would be.
   "rejected-variable": "warning",
+  // The send strips HTML comments today, so Outlook gets the non-Outlook branch; the
+  // message still delivers everywhere.
+  "outlook-conditional-stripped": "warning",
 };
 
 export function severityForCode(code: HandlebarsIssueCode): TemplateIssueSeverity {
@@ -314,6 +321,24 @@ function walkElement(
       const found = issuesInText(value, at_field);
       out.push(...found);
       out.push(...rejectedVariableIssues(value, at_field, options, found));
+    }
+  }
+
+  // One warning per HTML block, not per conditional: the fix is the same for all of them.
+  if (record.type === "html" && typeof record.content === "string") {
+    const [first] = findOutlookConditionals(record.content);
+    if (first) {
+      out.push({
+        severity: severityForCode("outlook-conditional-stripped"),
+        code: "outlook-conditional-stripped",
+        message: OUTLOOK_CONDITIONALS_STRIPPED_MESSAGE,
+        ...at,
+        field: "content",
+        raw: first.raw,
+        occurrence: 0,
+        start: first.start,
+        end: first.end,
+      });
     }
   }
 

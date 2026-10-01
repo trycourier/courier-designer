@@ -12,7 +12,11 @@ The sidebar now shows the reasons under the code editor, as the `code` field's f
 the block keeps its last valid HTML; for a block whose stored HTML is already
 invalid it says edits won't save until that's fixed. Outlook conditional comments
 (`<!--[if mso]>` … `<![endif]-->`) save as written, including the
-`<!--[if !mso]><!-->` form that used to be dropped silently. HTML and handlebars comments no longer count toward the bracket and tag
+`<!--[if !mso]><!-->` form that used to be dropped silently. Because the send currently
+strips HTML comments, an HTML block that uses them gets a warning (never an error) in the
+sidebar, in the canvas gutter and in `collectTemplateIssues`, as
+`outlook-conditional-stripped`: the email still delivers, but Outlook gets the same markup
+as other clients. HTML and handlebars comments no longer count toward the bracket and tag
 checks, so a `->` or a commented-out table inside a comment no longer blocks the
 save. `MonacoCodeEditor` gains an optional `onValidationErrors(errors, { edited })`
 callback that receives those reasons.

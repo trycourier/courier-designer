@@ -69,4 +69,28 @@ describe("HTMLForm validation errors (SUP-779)", () => {
 
     expect(screen.queryByTestId("html-validation-errors")).toBeNull();
   });
+
+  describe("Outlook conditional comments", () => {
+    const render_ = (code: string) =>
+      render(
+        <HTMLForm
+          element={{ attrs: { id: "node-mso", code } } as unknown as ProseMirrorNode}
+          editor={null}
+        />
+      );
+
+    it("warns that they are removed when the email is sent, without blocking", () => {
+      render_(`<!--[if mso]><p>Outlook</p><![endif]--><p>everyone</p>`);
+
+      const warning = screen.getByTestId("html-outlook-conditionals-warning");
+      expect(warning.textContent).toContain("are removed when this email is sent");
+      expect(screen.queryByTestId("html-validation-errors")).toBeNull();
+    });
+
+    it("shows nothing for HTML without them", () => {
+      render_(`<!-- note --><p>everyone</p>`);
+
+      expect(screen.queryByTestId("html-outlook-conditionals-warning")).toBeNull();
+    });
+  });
 });
