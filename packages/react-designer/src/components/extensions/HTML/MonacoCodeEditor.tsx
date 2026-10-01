@@ -23,36 +23,8 @@ interface MonacoCodeEditorProps {
   onSave: (code: string) => void;
   onCancel: () => void; // Keep for backward compatibility but won't be used
   onValidationChange?: (isValid: boolean) => void;
-  /**
-   * Called with the reasons the current code can't be saved (empty when it's valid).
-   * Invalid code is never passed to onSave, so surface these or the edit is lost silently.
-   * `edited` is false until the user changes the code, so hosts can tell code that was
-   * loaded invalid apart from an edit that was just rejected.
-   */
-  onValidationErrors?: (errors: string[], meta: { edited: boolean }) => void;
   validator?: HTMLValidator;
 }
-
-const GENERIC_VALIDATION_ERROR = "This HTML didn't pass validation.";
-
-// Outlook conditional comments: <!--[if mso]>, <!--[if gte mso 9]>, <!--[if !mso]><!-->
-const MSO_CONDITIONAL_PATTERN = /<!--\[if\s[^\]]*\bmso\b[^\]]*\]>/i;
-
-// Handlebars comments ({{!-- … --}}, {{! … }}) never render.
-const stripHandlebarsComments = (code: string) =>
-  code.replace(/\{\{!--[\s\S]*?--\}\}/g, "").replace(/\{\{![\s\S]*?\}\}/g, "");
-
-// Only markup can unbalance brackets and tags, so leave out what isn't markup: comments,
-// every Handlebars expression (partials `{{> name}}`, and helpers like
-// `{{#if (condition data.n ">" 5)}}` whose string arguments hold brackets), and the bodies
-// of <style> and <script>, where ">" is a CSS combinator or a JS operator.
-// A string argument containing "}}" ends the match early; the handlebars scanner in
-// courier-designer#216 handles that and should replace this regex once it lands.
-const stripNonMarkup = (code: string) =>
-  stripHandlebarsComments(code)
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\{\{\{[\s\S]*?\}\}\}|\{\{[\s\S]*?\}\}/g, "")
-    .replace(/(<(style|script)\b[^>]*>)[\s\S]*?(<\/\2\s*>)/gi, "$1$3");
 
 // Debounce utility
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,64 +43,45 @@ function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: num
 }
 
 /**
- * Returns the reasons HTML can't be saved, using Monaco's markers and DOMParser.
- * An empty array means the code is valid. Checks for:
- * - Outlook conditional comments (unsupported)
+ * Default HTML validator using Monaco's markers and DOMParser
+ * Checks for:
  * - Monaco language service errors
  * - Incomplete/malformed tags
  * - Mismatched angle brackets
  * - Unclosed tags
  */
-export const getHTMLValidationErrors = (
-  code: string,
-  editor: editor.IStandaloneCodeEditor,
-  monaco: Monaco
-): string[] => {
-  if (!editor || !monaco) return [];
+export const defaultHTMLValidator: HTMLValidator = (code, editor, monaco) => {
+  if (!editor || !monaco) return true;
 
   const model = editor.getModel();
-  if (!model) return [];
-
-  // Unsupported by policy, even when the conditional markup is otherwise well formed.
-  if (MSO_CONDITIONAL_PATTERN.test(stripHandlebarsComments(code))) {
-    return [
-      "Outlook conditional comments (<!--[if mso]> … <![endif]-->) aren't supported in HTML blocks. Remove them, keeping only the markup for non-Outlook clients.",
-    ];
-  }
+  if (!model) return true;
 
   // Get validation markers from Monaco's HTML language service
   const markers = monaco.editor.getModelMarkers({ resource: model.uri });
 
   // Filter for errors only (severity 8), ignore warnings and info
-  const markerErrors = markers.filter((marker: editor.IMarker) => marker.severity === 8);
+  const errors = markers.filter((marker: editor.IMarker) => marker.severity === 8);
 
-  if (markerErrors.length > 0) {
-    return markerErrors
-      .slice(0, 3)
-      .map((marker) => `Line ${marker.startLineNumber}: ${marker.message}`);
-  }
+  // If Monaco found errors, it's invalid
+  if (errors.length > 0) return false;
 
   // Additional validation with DOMParser to catch unclosed tags
   // Monaco's HTML validator can be lenient
-  if (!code.trim()) return []; // Empty code is valid
-
-  const markup = stripNonMarkup(code);
+  if (!code.trim()) return true; // Empty code is valid
 
   try {
     // Check for incomplete/malformed tags (e.g., "<a " without closing ">")
     // Look for opening angle bracket followed by tag name but not properly closed
     const incompleteTagPattern = /<[a-z][a-z0-9]*\s[^>]*$/i;
-    if (incompleteTagPattern.test(markup.trim())) {
-      return ['The last tag is missing its closing ">".'];
+    if (incompleteTagPattern.test(code.trim())) {
+      return false; // Incomplete tag at the end
     }
 
     // Check for opening tags that are never closed with ">"
-    const allOpenBrackets = (markup.match(/</g) || []).length;
-    const allCloseBrackets = (markup.match(/>/g) || []).length;
+    const allOpenBrackets = (code.match(/</g) || []).length;
+    const allCloseBrackets = (code.match(/>/g) || []).length;
     if (allOpenBrackets !== allCloseBrackets) {
-      return [
-        `Found ${allOpenBrackets} "<" but ${allCloseBrackets} ">". A tag is missing an angle bracket.`,
-      ];
+      return false; // Mismatched angle brackets
     }
 
     const parser = new DOMParser();
@@ -137,15 +90,15 @@ export const getHTMLValidationErrors = (
     // Check for parser errors
     const parserErrors = doc.getElementsByTagName("parsererror");
     if (parserErrors.length > 0) {
-      return ["The HTML couldn't be parsed."];
+      return false;
     }
 
     // Check for unclosed tags by comparing opening and closing tags
-    const openTags = (markup.match(/<([a-z][a-z0-9]*)\b[^>]*(?<!\/\/)>/gi) || [])
+    const openTags = (code.match(/<([a-z][a-z0-9]*)\b[^>]*(?<!\/\/)>/gi) || [])
       .map((tag: string) => tag.match(/<([a-z][a-z0-9]*)/i)?.[1]?.toLowerCase())
       .filter(Boolean);
 
-    const closeTags = (markup.match(/<\/([a-z][a-z0-9]*)\s*>/gi) || [])
+    const closeTags = (code.match(/<\/([a-z][a-z0-9]*)\s*>/gi) || [])
       .map((tag: string) => tag.match(/<\/([a-z][a-z0-9]*)/i)?.[1]?.toLowerCase())
       .filter(Boolean);
 
@@ -171,42 +124,29 @@ export const getHTMLValidationErrors = (
     );
 
     // Check if all opening tags have closing tags
-    for (const tag of new Set(openTagsFiltered)) {
+    for (const tag of openTagsFiltered) {
       const openCount = openTags.filter((t) => t === tag).length;
       const closeCount = closeTags.filter((t) => t === tag).length;
       if (openCount !== closeCount) {
-        const tags = (n: number, kind: string) => `${n} ${kind} tag${n === 1 ? "" : "s"}`;
-        return [`<${tag}> has ${tags(openCount, "opening")} but ${tags(closeCount, "closing")}.`];
+        return false;
       }
     }
 
-    return [];
+    return true;
   } catch (error) {
-    return [GENERIC_VALIDATION_ERROR];
+    return false;
   }
 };
-
-/** Boolean form of getHTMLValidationErrors, kept as the `validator` prop's default. */
-export const defaultHTMLValidator: HTMLValidator = (code, editor, monaco) =>
-  getHTMLValidationErrors(code, editor, monaco).length === 0;
 
 export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   code,
   onSave,
   onValidationChange,
-  onValidationErrors,
   validator = defaultHTMLValidator,
 }) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const [isValid, setIsValid] = useState(true);
-  // null so the first check always reports, clearing errors left over from another block
-  const lastErrorsRef = useRef<string | null>(null);
-  const hasEditedRef = useRef(false);
-  // The content-change listener is registered once on mount, so it reads the latest
-  // callbacks through refs instead of the first render's closure.
-  const onValidationErrorsRef = useRef(onValidationErrors);
-  onValidationErrorsRef.current = onValidationErrors;
   const { isDark, containerRef } = useIsDarkMode();
 
   // Check validation status using the provided or default validator
@@ -217,31 +157,15 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     if (!model) return true;
 
     const code = model.getValue();
-    // Only the default validator can explain itself; a custom one gets a generic reason.
-    const errors =
-      validator === defaultHTMLValidator
-        ? getHTMLValidationErrors(code, editorRef.current, monacoRef.current)
-        : validator(code, editorRef.current, monacoRef.current)
-          ? []
-          : [GENERIC_VALIDATION_ERROR];
-    const valid = errors.length === 0;
+    const valid = validator(code, editorRef.current, monacoRef.current);
 
     if (valid !== isValid) {
       setIsValid(valid);
       onValidationChange?.(valid);
     }
 
-    const edited = hasEditedRef.current;
-    const errorsKey = `${edited}\n${errors.join("\n")}`;
-    if (errorsKey !== lastErrorsRef.current) {
-      lastErrorsRef.current = errorsKey;
-      onValidationErrorsRef.current?.(errors, { edited });
-    }
-
     return valid;
   }, [isValid, onValidationChange, validator]);
-  const checkValidationRef = useRef(checkValidation);
-  checkValidationRef.current = checkValidation;
 
   // Debounced save function that validates before saving
   const debouncedSave = useDebounce(() => {
@@ -262,9 +186,8 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
 
     // Listen to content changes to check validation
     editor.onDidChangeModelContent(() => {
-      hasEditedRef.current = true;
       // Small delay to allow Monaco to update markers
-      setTimeout(() => checkValidationRef.current(), 100);
+      setTimeout(checkValidation, 100);
     });
 
     // Initial validation check

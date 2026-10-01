@@ -39,21 +39,6 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
   });
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
-  // Rejected code never reaches the node, so the reasons go on the `code` field and render
-  // in its FormMessage, like any other sidebar field error.
-  const handleValidationErrors = useCallback(
-    (errors: string[], { edited }: { edited: boolean }) => {
-      if (errors.length === 0) {
-        form.clearErrors("code");
-        return;
-      }
-      const headline = edited
-        ? "Changes not saved. The block keeps its last valid HTML."
-        : "This HTML isn't supported. Edits won't be saved until it's fixed.";
-      form.setError("code", { type: "validate", message: [headline, ...errors].join("\n") });
-    },
-    [form]
-  );
 
   const handleCodeSave = useCallback(
     (newCode: string) => {
@@ -96,41 +81,31 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
           </Button>
 
           {/* Monaco Editor */}
-          <form
-            data-sidebar-form
-            onChange={() => {
-              updateNodeAttributes(form.getValues());
-            }}
-            className={
+          <div
+            className={`courier-overflow-hidden courier-rounded-md courier-border courier-border-border ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : "courier-mb-4"}`}
+            style={
               isSidebarExpanded
-                ? "courier-flex courier-flex-col courier-flex-1 courier-min-h-0"
-                : undefined
+                ? { minHeight: "200px" }
+                : {
+                    minHeight: "200px",
+                    height: "300px",
+                    resize: "vertical",
+                    overflow: "auto",
+                  }
             }
           >
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem
-                  className={
-                    isSidebarExpanded
-                      ? "courier-flex courier-flex-col courier-flex-1 courier-min-h-0"
-                      : "courier-mb-4"
-                  }
-                >
-                  <div
-                    className={`courier-overflow-hidden courier-rounded-md courier-border courier-border-border ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : ""}`}
-                    style={
-                      isSidebarExpanded
-                        ? { minHeight: "200px" }
-                        : {
-                            minHeight: "200px",
-                            height: "300px",
-                            resize: "vertical",
-                            overflow: "auto",
-                          }
-                    }
-                  >
+            <form
+              data-sidebar-form
+              onChange={() => {
+                updateNodeAttributes(form.getValues());
+              }}
+              className="courier-h-full"
+            >
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem className="courier-h-full">
                     <FormControl>
                       <MonacoCodeEditor
                         code={field.value}
@@ -139,19 +114,14 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                           handleCodeSave(newCode);
                         }}
                         onCancel={() => {}}
-                        onValidationErrors={handleValidationErrors}
                       />
                     </FormControl>
-                  </div>
-                  <FormMessage
-                    aria-live="polite"
-                    data-testid="html-validation-errors"
-                    className="courier-flex-shrink-0 courier-whitespace-pre-line"
-                  />
-                </FormItem>
-              )}
-            />
-          </form>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </div>
         </div>
         <ConditionsSection
           value={element?.attrs?.if as ElementalIfCondition | undefined}
