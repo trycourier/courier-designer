@@ -4,6 +4,7 @@ import type {
   ElementalNode,
   ElementalContent,
   ElementalTextContentNode,
+  ElementalImageTextContent,
   TiptapDoc,
 } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
@@ -153,8 +154,9 @@ export function convertElementsArrayToTiptapNodes(
       convertStringElementToTiptapNodes(el, nodes);
     } else if (el.type === "link") {
       convertLinkElementToTiptapNodes(el, nodes);
+    } else if (el.type === "img") {
+      convertImageElementToTiptapNode(el, nodes);
     }
-    // "img" type can be added later if needed
   }
 
   return nodes;
@@ -223,6 +225,20 @@ function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: Ti
 
   // Parse variables within link text
   parseTextSegmentWithVariables(content, marks, nodes);
+}
+
+function convertImageElementToTiptapNode(el: ElementalImageTextContent, nodes: TiptapNode[]): void {
+  if (!el.src) return;
+  nodes.push({
+    type: "inlineImage",
+    attrs: {
+      src: el.src,
+      alt: el.alt_text ?? null,
+      width: el.width ?? null,
+      href: el.href ?? null,
+      disableTracking: el.disable_tracking ?? false,
+    },
+  });
 }
 
 /**

@@ -15,6 +15,7 @@ import type {
   ElementalTextContentNode,
   ElementalStringTextContent,
   ElementalLinkTextContent,
+  ElementalImageTextContent,
   Align,
   IActionButtonStyle,
 } from "@/types/elemental.types";
@@ -224,6 +225,19 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
         content: `{{${node.attrs.id}}}`,
         ...flags,
       });
+      continue;
+    }
+
+    if (node.type === "inlineImage") {
+      const src = node.attrs?.src as string | undefined;
+      if (!src) continue;
+      flush();
+      const img: ElementalImageTextContent = { type: "img", src };
+      if (node.attrs?.href) img.href = node.attrs.href as string;
+      if (node.attrs?.disableTracking) img.disable_tracking = true;
+      if (node.attrs?.alt) img.alt_text = node.attrs.alt as string;
+      if (node.attrs?.width) img.width = node.attrs.width as string;
+      elements.push(img);
       continue;
     }
 

@@ -26,6 +26,7 @@ export { FixedChannelPaste } from "./FixedChannelPaste";
 export { FixedChannelSelection } from "./FixedChannelSelection";
 export { Heading } from "./Heading";
 export { ImageBlock } from "./ImageBlock";
+export { InlineImage } from "./InlineImage";
 export { Link } from "./Link";
 export { List } from "./List";
 export { ListItem } from "./ListItem";

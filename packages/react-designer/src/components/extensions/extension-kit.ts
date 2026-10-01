@@ -23,6 +23,7 @@ import {
   HardBreak,
   Heading,
   ImageBlock,
+  InlineImage,
   Link,
   List,
   ListItem,
@@ -162,6 +163,7 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     // Only include Underline extension if not disabled
     ...(marksConfig.underline === "disabled" ? [] : [Underline]),
     ImageBlock.configure(),
+    InlineImage,
     FileHandler.configure({
       allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
       onDrop: (currentEditor: Editor, files: File[], pos: number) => {

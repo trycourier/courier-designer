@@ -75,6 +75,11 @@
     @apply courier-h-auto courier-w-full courier-max-w-full;
   }
 
+  /* An img inside a text line keeps its own size, like the rendered email. */
+  & img[data-inline-image] {
+    @apply courier-inline-block courier-w-auto courier-align-middle;
+  }
+
   [data-type="divider"] {
     @apply courier-py-4 courier-transition-all courier-duration-100 courier-ease-in-out courier-cursor-pointer;
 
