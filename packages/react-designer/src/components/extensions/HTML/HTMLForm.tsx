@@ -156,10 +156,14 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                   {findOutlookConditionals(field.value).length > 0 && (
                     <div
                       data-testid="html-outlook-conditionals-warning"
-                      className="courier-flex courier-flex-shrink-0 courier-items-start courier-gap-2 courier-rounded-md courier-border courier-border-yellow-500/40 courier-bg-yellow-50 courier-p-3 dark:courier-border-yellow-600/40 dark:courier-bg-yellow-950/30"
+                      className="courier-flex courier-flex-shrink-0 courier-items-start courier-gap-2 courier-rounded-md courier-border courier-border-amber-200 courier-bg-amber-50 courier-p-3 dark:courier-border-amber-700/40 dark:courier-bg-amber-950/30"
                     >
-                      <AlertTriangle className="courier-mt-0.5 courier-h-4 courier-w-4 courier-flex-shrink-0 courier-text-yellow-600 dark:courier-text-yellow-400" />
-                      <p className="courier-text-xs courier-text-yellow-800 dark:courier-text-yellow-200">
+                      {/* Amber 50/200/600/800 are the canvas gutter's warning palette (CanvasIssueGutter). */}
+                      <AlertTriangle className="courier-mt-0.5 courier-h-4 courier-w-4 courier-flex-shrink-0 courier-text-amber-600 dark:courier-text-amber-400" />
+                      <p className="courier-text-xs courier-text-amber-800 dark:courier-text-amber-200">
+                        <span className="courier-font-medium courier-issue-label-warning">
+                          Warning:
+                        </span>{" "}
                         {OUTLOOK_CONDITIONALS_STRIPPED_MESSAGE}
                       </p>
                     </div>
