@@ -32,7 +32,8 @@ import { Extension } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DropIndicatorPlaceholder } from "@/components/ui/DropIndicatorPlaceholder";
 import { defaultEmailContent } from "./Email";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -783,6 +784,9 @@ const EmailEditor = ({
       };
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  // The block type being dragged while it would land after the last block
+  // (pointer in the fallback zones below the content), or null.
+  const [dropAtEnd, setDropAtEnd] = useState<string | null>(null);
 
   // Setup drop zone for the entire editor area
   // This acts as a fallback when not dropping on a specific element
@@ -790,23 +794,70 @@ const EmailEditor = ({
     const element = editorContainerRef.current;
     if (!element || readOnly) return;
 
-    return dropTargetForElements({
+    // Only act as drop target when no child drop targets are available
+    // This allows individual elements to be the primary drop targets
+    const canDrop = ({ source }: { source: { data: Record<string, unknown> } }) =>
+      // Sidebar items always drop; editor items use this zone as a fallback
+      source.data.type === "sidebar" || source.data.type === "editor";
+
+    interface ZoneArgs {
+      source: { data: Record<string, unknown> };
+      location: {
+        current: {
+          dropTargets: { data: Record<string | symbol, unknown> }[];
+          input: { clientY: number };
+        };
+      };
+    }
+    const END_ZONES = ["editor-drop-zone", "canvas-drop-zone"];
+    const showEndIndicator = ({ source, location }: ZoneArgs) => {
+      // Either zone counts: the indicator grows the card under the pointer,
+      // moving it from the canvas zone into the editor zone, and if only the
+      // innermost zone kept it, each would undo the other every frame.
+      const isInnermost = END_ZONES.includes(String(location.current.dropTargets[0]?.data.id));
+      const content = element.querySelector(".ProseMirror");
+      const below =
+        !!content && location.current.input.clientY > content.getBoundingClientRect().bottom;
+      // The last block may still be holding its own bottom indicator, which
+      // already says "after the last block"; don't draw a second one.
+      const blockShowsIndicator = !!content?.querySelector(".courier-drag-indicator");
+      setDropAtEnd(
+        isInnermost && below && !blockShowsIndicator ? String(source.data.dragType ?? "text") : null
+      );
+    };
+    const hideEndIndicator = () => setDropAtEnd(null);
+
+    const zone = dropTargetForElements({
       element,
       getData: () => ({
         type: "editor",
         id: "editor-drop-zone",
       }),
-      // Only act as drop target when no child drop targets are available
-      // This allows individual elements to be the primary drop targets
-      canDrop: ({ source }) => {
-        // Always allow sidebar items to be dropped on the editor
-        if (source.data.type === "sidebar") {
-          return true;
-        }
-        // For editor items, this zone acts as a fallback
-        return source.data.type === "editor";
-      },
+      canDrop,
+      onDrag: showEndIndicator,
+      onDragLeave: hideEndIndicator,
+      onDrop: hideEndIndicator,
     });
+
+    // The grey canvas around the email body too: a drag that runs past the end
+    // of the email still lands at the nearest block (after the last one)
+    // instead of nowhere.
+    const canvas = element.closest(".courier-editor-container");
+    const canvasZone = canvas
+      ? dropTargetForElements({
+          element: canvas,
+          getData: () => ({ type: "editor", id: "canvas-drop-zone" }),
+          canDrop,
+          onDrag: showEndIndicator,
+          onDragLeave: hideEndIndicator,
+          onDrop: hideEndIndicator,
+        })
+      : undefined;
+
+    return () => {
+      zone();
+      canvasZone?.();
+    };
   }, [readOnly]);
 
   return (
@@ -839,6 +890,12 @@ const EmailEditor = ({
         {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
         {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
       </EditorProvider>
+      {/* Outside EditorProvider: React must not insert nodes into the DOM TipTap owns. */}
+      {dropAtEnd !== null && (
+        <div className="c--drop-end">
+          <DropIndicatorPlaceholder type={dropAtEnd} />
+        </div>
+      )}
     </div>
   );
 };

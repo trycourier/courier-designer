@@ -10,6 +10,7 @@ import type {
   ElementalJsonnetNode,
   ElementalColumnsNode,
   ElementalColumnNode,
+  ElementalGroupNode,
   ElementalListNode,
   ElementalListItemNode,
   ElementalTextContentNode,
@@ -1000,6 +1001,18 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         return [columnsNodeProps as unknown as ElementalColumnsNode];
+      }
+
+      case "group": {
+        const groupNode: Record<string, unknown> = {
+          type: "group",
+          ...(node.attrs?.elementalProps as Record<string, unknown> | undefined),
+          elements: (node.content || []).flatMap(convertNode),
+        };
+        if (node.attrs?.loop) groupNode.loop = node.attrs.loop;
+        if (node.attrs?.if !== undefined) groupNode.if = node.attrs.if;
+        if (node.attrs?.locales) groupNode.locales = node.attrs.locales;
+        return [groupNode as unknown as ElementalGroupNode];
       }
 
       case "list": {

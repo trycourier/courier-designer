@@ -9,6 +9,7 @@ import { channelAtom } from "@/store";
 import type { ElementalChannelNode } from "@/types/elemental.types";
 import { getFlattenedVariables } from "../utils/getFlattenedVariables";
 import { extractVariablesFromContent } from "../utils/extractVariablesFromContent";
+import { extractLoopShapes, type LoopShape } from "../utils/extractLoopShapes";
 import type { ChannelType } from "@/store";
 
 export interface UseVariablesResult {
@@ -20,6 +21,11 @@ export interface UseVariablesResult {
    * Variables that are actually used in the channel's content
    */
   usedVariables: string[];
+  /**
+   * Loops over `data.*` arrays in the channel's content, and the item fields
+   * each one reads, so a host can collect array data for them
+   */
+  loops: LoopShape[];
   /**
    * Current variable values (for preview/testing)
    */
@@ -105,6 +111,13 @@ export const useVariables = (channelType?: ChannelType | "all"): UseVariablesRes
     return extractVariablesFromContent(channelElement.elements || []);
   }, [templateEditorContent, targetChannel]);
 
+  const loops = useMemo(() => {
+    const channelElement = templateEditorContent?.elements.find(
+      (el): el is ElementalChannelNode => el.type === "channel" && el.channel === targetChannel
+    );
+    return extractLoopShapes(channelElement?.elements || []);
+  }, [templateEditorContent, targetChannel]);
+
   // Function to update a variable's value
   const addVariableValue = useCallback(
     (key: string, value: string) => {
@@ -134,6 +147,7 @@ export const useVariables = (channelType?: ChannelType | "all"): UseVariablesRes
   return {
     availableVariables,
     usedVariables,
+    loops,
     variableValues,
     addVariableValue,
     addVariableValues,

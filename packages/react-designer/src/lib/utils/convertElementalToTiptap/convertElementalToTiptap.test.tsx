@@ -1240,57 +1240,38 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
-  it("should convert group node to column", () => {
+  it("should convert group node to a group, not a column layout", () => {
     const elemental = createElementalContent([
       {
         type: "group",
         elements: [
-          {
-            type: "text",
-            content: "First text",
-          },
-          {
-            type: "divider",
-          },
-          {
-            type: "text",
-            content: "Second text",
-          },
+          { type: "text", content: "First text" },
+          { type: "divider" },
+          { type: "text", content: "Second text" },
         ],
       } as any,
     ]);
 
     const result = convertElementalToTiptap(elemental);
 
-    // Group nodes are converted to column nodes
     expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe("column");
-    expect(result.content[0].attrs).toMatchObject({
-      columnsCount: 3, // 3 elements in the group
-      paddingVertical: 0,
-      paddingHorizontal: 0,
-      backgroundColor: "transparent",
-      borderWidth: 0,
-      borderRadius: 0,
-      borderColor: "transparent",
-    });
+    expect(result.content[0].type).toBe("group");
     expect(result.content[0].attrs.id).toBeDefined();
+    expect(result.content[0].content?.map((n) => n.type)).toEqual([
+      "paragraph",
+      "divider",
+      "paragraph",
+    ]);
   });
 
-  it("should convert group node with styling properties", () => {
+  it("should keep a group's loop, condition and unmapped fields", () => {
     const elemental = createElementalContent([
       {
         type: "group",
-        elements: [
-          { type: "text", content: "Column 1" },
-          { type: "text", content: "Column 2" },
-        ],
-        border: {
-          color: "#ff0000",
-          enabled: true,
-          size: "2px",
-          radius: 8,
-        },
+        loop: "data.products",
+        if: "data.show",
+        elements: [{ type: "text", content: "{{$.item.name}}" }],
+        border: { color: "#ff0000", enabled: true, size: "2px", radius: 8 },
         padding: "10px 20px",
         background_color: "#f0f0f0",
       } as any,
@@ -1298,18 +1279,16 @@ describe("convertElementalToTiptap", () => {
 
     const result = convertElementalToTiptap(elemental);
 
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe("column");
+    expect(result.content[0].type).toBe("group");
     expect(result.content[0].attrs).toMatchObject({
-      columnsCount: 2,
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      backgroundColor: "#f0f0f0",
-      borderWidth: 2,
-      borderRadius: 8,
-      borderColor: "#ff0000",
+      loop: "data.products",
+      if: "data.show",
+      elementalProps: {
+        border: { color: "#ff0000", enabled: true, size: "2px", radius: 8 },
+        padding: "10px 20px",
+        background_color: "#f0f0f0",
+      },
     });
-    expect(result.content[0].attrs.id).toBeDefined();
   });
 
   it("should handle multiple elements", () => {

@@ -4,6 +4,7 @@ import { ColumnForm } from "@/components/extensions/Column";
 import { ColumnCellForm } from "@/components/extensions/ColumnCell";
 import { HTMLForm } from "@/components/extensions/HTML";
 import { DividerForm } from "@/components/extensions/Divider";
+import { GroupForm } from "@/components/extensions/Group";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
 import { ListForm } from "@/components/extensions/List";
 import { TextBlockForm } from "@/components/extensions/TextBlock";
@@ -111,6 +112,14 @@ export const SideBarItemDetails = ({
       )}
       {element.type.name === "column" && (
         <ColumnForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
+      )}
+      {element.type.name === "group" && (
+        <GroupForm
           element={element}
           editor={editor}
           key={element.attrs.id}
