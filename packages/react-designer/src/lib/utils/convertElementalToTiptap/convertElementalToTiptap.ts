@@ -141,6 +141,13 @@ function withLiteralText<T>(literal: boolean, convert: () => T): T {
 }
 
 /**
+ * SMS and Push editors have no bold/italic/strike/underline marks in their
+ * schema; emitting one makes Tiptap drop the whole document. Keep the markers
+ * as literal text there instead.
+ */
+let plainTextMarks = false;
+
+/**
  * Convert an Elemental elements array (type: "string" | "link" sub-elements with boolean
  * formatting flags) into TipTap nodes. Handles variables ({{var}}) and newlines (\n → hardBreak).
  */
@@ -436,6 +443,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
           attrs: { href: match[2] },
         });
       } else {
+        if (plainTextMarks) continue;
         if (crossesHandlebars(match.index, match.index + match[0].length)) continue;
         allMatches.push({
           start: match.index,
@@ -1760,7 +1768,14 @@ export function convertElementalToTiptap(
 
   // Process elements to convert consecutive action nodes to ButtonRow (only for Inbox channel)
   const processedElements: TiptapNode[] = [];
-  const convertedNodes = targetChannelElements.flatMap(convertNode);
+  const previousPlainTextMarks = plainTextMarks;
+  plainTextMarks = channelNode.channel === "sms" || channelNode.channel === "push";
+  let convertedNodes: TiptapNode[];
+  try {
+    convertedNodes = targetChannelElements.flatMap(convertNode);
+  } finally {
+    plainTextMarks = previousPlainTextMarks;
+  }
 
   for (let i = 0; i < convertedNodes.length; i++) {
     const currentNode = convertedNodes[i];
