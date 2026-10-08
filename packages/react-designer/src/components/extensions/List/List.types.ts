@@ -14,6 +14,16 @@ function isLoopPath(path: string): boolean {
   return segments.length > 0 && segments.every((segment) => LOOP_SEGMENT.test(segment));
 }
 
+export const loopPathSchema = z
+  .string()
+  .optional()
+  .refine((val) => !val || isLoopPath(val), {
+    message: "Invalid path format",
+  })
+  .refine((val) => !val || val === "data" || val.startsWith("data."), {
+    message: "Path must start with data.",
+  });
+
 export const listSchema = z.object({
   id: z.string().optional(),
   listType: z.enum(["ordered", "unordered"]),
@@ -21,15 +31,7 @@ export const listSchema = z.object({
   paddingHorizontal: z.coerce.number().min(0),
   fontSize: typographyOverrideSchema,
   lineHeight: typographyOverrideSchema,
-  loop: z
-    .string()
-    .optional()
-    .refine((val) => !val || isLoopPath(val), {
-      message: "Invalid path format",
-    })
-    .refine((val) => !val || val === "data" || val.startsWith("data."), {
-      message: "Path must start with data.",
-    }),
+  loop: loopPathSchema,
 });
 
 export interface ListProps {

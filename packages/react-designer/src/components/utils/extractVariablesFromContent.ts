@@ -17,6 +17,8 @@ const EXTRACTABLE_PROPERTIES: Record<string, string[]> = {
   html: [], // Handled separately: HTML markup needs handlebars-aware filtering
 };
 
+const BARE_PATH = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+$/;
+
 /**
  * Properties in locales that may contain variables
  */
@@ -96,6 +98,10 @@ export const extractVariablesFromContent = (elements: ElementalNode[] = []): str
     }
     if (typeof nodeAny.loop === "string") {
       extractFromString(nodeAny.loop);
+      // A bare loop path ("data.products") is JavaScript, not handlebars, but it
+      // still names a payload field the send needs.
+      const path = nodeAny.loop.trim();
+      if (BARE_PATH.test(path)) variableSet.add(path);
     }
 
     // Process raw properties in channel nodes (like subject, title, text)

@@ -466,6 +466,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       const timerId = setTimeout(() => {
         if (!templateEditor || templateEditor.isDestroyed) return;
         if (getFormUpdating()) return;
+        // While typing, the caret's block is already selected. This runs after
+        // every save, so it would otherwise pull a lone group back over the
+        // block being typed in.
+        if (templateEditor.isFocused) return;
 
         // Set initial selection if document has only one node
         if (templateEditor.state.doc.childCount === 1) {
