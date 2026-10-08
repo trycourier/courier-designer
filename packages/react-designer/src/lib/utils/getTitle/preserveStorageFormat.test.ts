@@ -773,6 +773,102 @@ describe("createTitleUpdate - locales preservation", () => {
     });
   });
 
+  // C-21311: the canvas never carries the body's locales, so every inbox save
+  // dropped the body's translations while the title and button kept theirs.
+  it("should preserve the stored body's locales for inbox channel", () => {
+    const bodyLocales = { fr: { content: "Bonjour corps", checksum: "b04389c0" } };
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello title", locales: { fr: { title: "Bonjour titre" } } },
+            { type: "text", content: "Hello body", locales: bodyLocales },
+            {
+              type: "action",
+              content: "Open",
+              href: "https://example.com",
+              locales: { fr: { content: "Ouvrir" } },
+            },
+          ],
+        },
+      ],
+    };
+
+    const editorElements: ElementalNode[] = [
+      { type: "text", content: "Hello title" },
+      { type: "text", content: "Hello body" },
+      {
+        type: "action",
+        content: "Open!!",
+        href: "https://example.com",
+        locales: { fr: { content: "Ouvrir" } },
+      },
+    ];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", editorElements);
+
+    expect(result.elements[1]).toEqual({
+      type: "text",
+      content: "Hello body",
+      locales: bodyLocales,
+    });
+  });
+
+  it("should take the body's locales from the second text when a legacy h2 holds the title", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "text", content: "Legacy title", text_style: "h2" },
+            { type: "text", content: "Body", locales: { fr: { content: "Corps" } } },
+          ],
+        },
+      ],
+    };
+
+    const editorElements: ElementalNode[] = [
+      { type: "text", content: "Legacy title" },
+      { type: "text", content: "Body" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", editorElements);
+
+    expect(result.elements[1]).toEqual({
+      type: "text",
+      content: "Body",
+      locales: { fr: { content: "Corps" } },
+    });
+  });
+
+  it("should not add locales to the inbox body when the stored body has none", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Title" },
+            { type: "text", content: "Body" },
+          ],
+        },
+      ],
+    };
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Title" },
+      { type: "text", content: "Body" },
+    ]);
+
+    expect(result.elements[1]).toEqual({ type: "text", content: "Body" });
+  });
+
   it("should not add locales property when original meta has no locales", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",

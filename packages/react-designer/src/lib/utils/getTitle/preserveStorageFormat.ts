@@ -31,11 +31,40 @@ function getExistingMetaElement(
 }
 
 /**
+ * Returns the stored inbox body's locales. The canvas never carries them (see
+ * getOrCreateInboxElement), so the save copies them from the stored body,
+ * picked the way the canvas picks it: the first text, unless a legacy leading
+ * h2 stands in for the title.
+ */
+function getExistingInboxBodyLocales(
+  originalContent: ElementalContent | null | undefined
+): ElementalLocales<object> | undefined {
+  const channelElement = originalContent?.elements?.find(
+    (el) => el.type === "channel" && el.channel === "inbox"
+  );
+  if (!channelElement || channelElement.type !== "channel" || !channelElement.elements) {
+    return undefined;
+  }
+
+  const meta = channelElement.elements.find((el) => el.type === "meta");
+  const hasTitle =
+    Boolean(meta && "title" in meta && meta.title) ||
+    Boolean(channelElement.raw && "title" in channelElement.raw && channelElement.raw.title);
+  const texts = channelElement.elements.filter((el) => el.type === "text");
+  const leading = texts[0];
+  const leadingIsTitle =
+    !hasTitle && Boolean(leading && "text_style" in leading && leading.text_style === "h2");
+
+  const body = texts[leadingIsTitle ? 1 : 0];
+  return body && "locales" in body ? body.locales : undefined;
+}
+
+/**
  * Helper to check if locales object has any entries
  */
-function hasLocales(
-  locales: ElementalLocales<{ title?: string }> | undefined
-): locales is ElementalLocales<{ title?: string }> {
+function hasLocales<T extends object>(
+  locales: ElementalLocales<T> | undefined
+): locales is ElementalLocales<T> {
   return !!locales && Object.keys(locales).length > 0;
 }
 
@@ -270,9 +299,11 @@ export function createTitleUpdate(
     // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const bodyElement = textElements[1];
     const bodyContent = bodyElement ? extractPlainTextFromNode(bodyElement) : "\n";
+    const bodyLocales = getExistingInboxBodyLocales(originalContent);
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
+      ...(hasLocales(bodyLocales) && { locales: bodyLocales }),
     };
 
     // Clean action elements
