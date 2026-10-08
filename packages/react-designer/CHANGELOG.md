@@ -1,5 +1,12 @@
 # @trycourier/react-designer
 
+## 0.10.1
+
+### Patch Changes
+
+- 7498e1d: The In-app editor keeps the body's translations when it saves; any edit used to drop them while the title and button kept theirs.
+- 9168a1a: SMS and Push editors no longer open blank when a text block contains markdown such as `**bold**`; the markers stay as literal text.
+
 ## 0.10.0
 
 ### Minor Changes
