@@ -35,6 +35,16 @@ describe("the path a var call reads", () => {
     expect(variableReferencesIn("{{var data.key}}")).toEqual(["data.key"]);
   });
 
+  // C-21545: the send resolves the quoted path as JSONPath, so `expo[0]`
+  // renders there; as a Handlebars ID it was malformed and never listed.
+  it.each([
+    ['{{var "tokens.expo[0].status"}}', "tokens.expo.0.status"],
+    ['{{inline-var "data.items[0].tags[2]"}}', "data.items.0.tags.2"],
+    ['{{var "data.grid[0][1]"}}', "data.grid.0.1"],
+  ])("%s contributes %s, an index the host can nest", (text, path) => {
+    expect(variableReferencesIn(text)).toEqual([path]);
+  });
+
   it("adds nothing for a call with no argument", () => {
     expect(variableReferencesIn("{{var}}")).toEqual([]);
   });

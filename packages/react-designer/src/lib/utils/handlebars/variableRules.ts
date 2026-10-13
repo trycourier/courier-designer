@@ -263,12 +263,23 @@ function isLiteral(token: string): boolean {
  */
 const PATH_LITERAL_HELPERS = new Set(["var", "inline-var"]);
 
-/** The quoted path a `var`/`inline-var` call names, if it named one. */
+/**
+ * The quoted path a `var`/`inline-var` call names, if it named one.
+ *
+ * The send reads it as JSONPath, so `tokens.expo[0].status` is legal there but
+ * not as a Handlebars ID. The index is spelled `.0` here, which both grammars
+ * accept and which nests the same way the preview's lookup walks it.
+ */
 export function varLiteralPath(name: string, args: string[]): string | undefined {
   if (!PATH_LITERAL_HELPERS.has(name)) return undefined;
   const raw = args[0]?.trim();
   if (!raw || !/^["'].*["']$/.test(raw)) return undefined;
-  return raw.slice(1, -1).trim() || undefined;
+  return (
+    raw
+      .slice(1, -1)
+      .trim()
+      .replace(/(?<=[^.[])\[(\d+)\]/g, ".$1") || undefined
+  );
 }
 
 /**
