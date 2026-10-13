@@ -13,9 +13,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  Select,
+  type SelectOption,
   Switch,
-  ToggleGroup,
-  ToggleGroupItem,
 } from "@/components/ui-kit";
 import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
@@ -80,39 +80,12 @@ const INBOX_STYLE_LABELS: Record<InboxButtonStyle, string> = {
 };
 
 /**
- * The style picker, ordered by how much chrome each one draws — loudest to quietest.
+ * The style options, ordered by how much chrome each one draws — loudest to quietest.
  */
-const InboxButtonStyleToggle = ({
-  value,
-  onValueChange,
-}: {
-  value: InboxButtonStyle;
-  onValueChange: (value: InboxButtonStyle) => void;
-}) => (
-  <ToggleGroup
-    type="single"
-    value={value}
-    // Radix reports an empty string when the active segment is toggled off. A button always has
-    // one of the four styles, so that is ignored rather than written back as a cleared field.
-    onValueChange={(next) => {
-      if (next) onValueChange(next as InboxButtonStyle);
-    }}
-    // Wraps to two rows of two. Four names do not fit across a sidebar this narrow at any size
-    // worth reading, and abbreviating them would give up the thing the names are here for.
-    className="courier-w-full courier-flex-wrap courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-shadow-sm"
-  >
-    {INBOX_BUTTON_STYLES.map((segment) => (
-      <ToggleGroupItem
-        key={segment}
-        size="sm"
-        value={segment}
-        className="courier-basis-[calc(50%-0.125rem)] courier-grow courier-min-w-0 courier-px-0 courier-h-7"
-      >
-        {INBOX_STYLE_LABELS[segment]}
-      </ToggleGroupItem>
-    ))}
-  </ToggleGroup>
-);
+const INBOX_STYLE_OPTIONS: SelectOption<InboxButtonStyle>[] = INBOX_BUTTON_STYLES.map((style) => ({
+  value: style,
+  label: INBOX_STYLE_LABELS[style],
+}));
 
 const SideBarComponent = () => {
   const editor = useAtomValue(templateEditorAtom);
@@ -578,9 +551,13 @@ const SideBarComponent = () => {
               name="buttonStyle"
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
-                  <FormLabel>Style</FormLabel>
+                  <FormLabel>Button style</FormLabel>
                   <FormControl>
-                    <InboxButtonStyleToggle value={field.value} onValueChange={field.onChange} />
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={INBOX_STYLE_OPTIONS}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -655,9 +632,13 @@ const SideBarComponent = () => {
               name="secondaryButtonStyle"
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
-                  <FormLabel>Style</FormLabel>
+                  <FormLabel>Button style</FormLabel>
                   <FormControl>
-                    <InboxButtonStyleToggle value={field.value} onValueChange={field.onChange} />
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={INBOX_STYLE_OPTIONS}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
