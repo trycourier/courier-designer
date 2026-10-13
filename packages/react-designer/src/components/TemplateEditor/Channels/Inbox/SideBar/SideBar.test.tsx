@@ -269,6 +269,66 @@ describe("Inbox SideBar", () => {
       expect(screen.getByText("Enable second button")).toBeInTheDocument();
     });
 
+    it("should label the style dropdown Button style and show the current style", async () => {
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      expect(screen.queryByText("Style")).not.toBeInTheDocument();
+      // The field label names the dropdown's trigger, which shows the current style.
+      expect(screen.getByRole("button", { name: "Button style" })).toHaveTextContent("Primary");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Button style dropdown
+  // -------------------------------------------------------------------------
+
+  describe("Button style dropdown", () => {
+    it("lists the four styles and writes the chosen one to the canvas node", async () => {
+      const originalCommand = mockEditor.commands.command.getMockImplementation();
+      const setNodeMarkup = vi.fn();
+      mockEditor.commands.command.mockImplementation(
+        (fn: (args: { tr: { setNodeMarkup: Mock } }) => boolean) => {
+          fn({ tr: { setNodeMarkup } });
+          return true;
+        }
+      );
+
+      try {
+        render(<SideBar />);
+
+        await act(async () => {
+          vi.advanceTimersByTime(10);
+        });
+
+        const trigger = screen.getByRole("button", { name: "Button style" });
+        await act(async () => {
+          fireEvent.keyDown(trigger, { key: "Enter" });
+        });
+
+        const items = screen.getAllByRole("menuitem").map((item) => item.textContent);
+        expect(items).toEqual(["Primary", "Secondary", "Tertiary", "Link"]);
+
+        await act(async () => {
+          fireEvent.click(screen.getByRole("menuitem", { name: "Link" }));
+          vi.advanceTimersByTime(600);
+        });
+
+        // "Link" maps to the same `link` value the tile picker saved — no data change.
+        expect(setNodeMarkup).toHaveBeenCalledWith(
+          0,
+          expect.anything(),
+          expect.objectContaining({ actionStyle: "link" })
+        );
+        expect(screen.getByRole("button", { name: "Button style" })).toHaveTextContent("Link");
+      } finally {
+        mockEditor.commands.command.mockImplementation(originalCommand!);
+      }
+    });
+
     it("should show Action URL field when button is enabled", async () => {
       render(<SideBar />);
 
