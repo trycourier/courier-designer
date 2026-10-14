@@ -59,8 +59,9 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
   // Use regex patterns to match complete markdown patterns
   // Order matters: longer patterns first (** before *, __ before _)
   const patterns = [
-    // Variables: {{variable}}
+    // Variables: {{variable}}, and the brand footer's single-brace {variable}
     { regex: /\{\{([^}]*)\}\}/g, type: "variable" },
+    { regex: /(?<!\{)\{([^{}]+)\}(?!\})/g, type: "variable" },
     // Links: [text](url)
     { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: "link" },
     // Bold: **text** or __text__
@@ -92,6 +93,8 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
     while ((match = regex.exec(text)) !== null) {
       if (pattern.type === "variable") {
         const variableName = match[1].trim();
+        // A single-brace match that isn't a path (e.g. "{ not a var }") stays text.
+        if (!match[0].startsWith("{{") && !isValidVariableName(variableName)) continue;
         // For empty variables (newly inserted, being edited), don't mark as invalid
         // Validation will happen on blur in VariableChipBase
         const isValid = variableName === "" || isValidVariableName(variableName);

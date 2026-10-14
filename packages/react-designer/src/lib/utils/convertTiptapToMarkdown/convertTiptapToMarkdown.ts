@@ -22,9 +22,9 @@ const markToMD = (mark: TiptapMark): string => {
 const convertNodeToMarkdown = (node: TiptapNode): string => {
   switch (node.type) {
     case "variable": {
-      // An empty/unbound variable id serializes to `{{}}`, which the backend Handlebars
-      // compile rejects (parse error) and drops the message. Emit nothing instead.
-      return node.attrs?.id ? `{{${node.attrs.id}}}` : "";
+      // Brand footers resolve single-brace `{path}` only; `{{path}}` ships verbatim.
+      // An empty/unbound id is dropped rather than emitted as `{}`.
+      return node.attrs?.id ? `{${node.attrs.id}}` : "";
     }
 
     case "text": {
@@ -37,7 +37,9 @@ const convertNodeToMarkdown = (node: TiptapNode): string => {
 
       const linkMark = node.marks?.find((m) => m.type === "link");
       if (linkMark) {
-        text = `[${text}](${linkMark.attrs?.href})`;
+        // Same single-brace rule for hrefs, which also repairs a saved `{{urls.preferences}}`.
+        const href = String(linkMark.attrs?.href ?? "").replace(/\{\{\s*([^{}]+?)\s*\}\}/g, "{$1}");
+        text = `[${text}](${href})`;
       }
 
       return text;

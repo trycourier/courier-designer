@@ -936,4 +936,26 @@ Contact us for {{special_offer}}!`;
       });
     });
   });
+
+  it("reads a single-brace {path} as a variable chip and leaves non-paths as text", () => {
+    const result = convertMarkdownToTiptap("Hi {brand.name}, { not a var }");
+
+    expect(result.content[0].content).toEqual([
+      { type: "text", text: "Hi " },
+      { type: "variable", attrs: { id: "brand.name", isInvalid: false } },
+      { type: "text", text: ", { not a var }" },
+    ]);
+  });
+
+  it("keeps a single-brace link href on the link", () => {
+    const result = convertMarkdownToTiptap("[Manage]({$.urls.preferences})");
+
+    expect(result.content[0].content).toEqual([
+      {
+        type: "text",
+        text: "Manage",
+        marks: [{ type: "link", attrs: { href: "{$.urls.preferences}" } }],
+      },
+    ]);
+  });
 });

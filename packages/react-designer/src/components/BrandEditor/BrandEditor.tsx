@@ -14,6 +14,7 @@ import { MainLayout } from "../ui/MainLayout";
 import type { BrandEditorFormValues, BrandSettings } from "./BrandEditor.types";
 import { defaultBrandEditorFormValues } from "./BrandEditor.types";
 import { Editor, type EditorProps } from "./Editor";
+import { markdownHasPreferencesLink } from "./footerPreferencesLink";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "./store";
 
 export interface BrandEditorProps extends EditorProps {
@@ -126,12 +127,6 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       if (!brandEditorForm) {
         const brandSettings = templateData?.data?.tenant?.brand?.settings;
 
-        const paragraphs =
-          brandEditorContent?.split("\n") ?? brandSettings?.email?.footer?.markdown?.split("\n");
-        const findPrefencesUrl = paragraphs?.find((paragraph: string) =>
-          paragraph.includes("{{urls.preferences}}")
-        );
-
         setBrandEditorForm({
           brandColor: brandSettings?.colors?.primary || defaultBrandEditorFormValues.brandColor,
           textColor: brandSettings?.colors?.secondary || defaultBrandEditorFormValues.textColor,
@@ -154,7 +149,9 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
           xLink:
             brandSettings?.email?.footer?.social?.twitter?.url ||
             defaultBrandEditorFormValues.xLink,
-          isPreferences: Boolean(findPrefencesUrl),
+          isPreferences: markdownHasPreferencesLink(
+            brandEditorContent ?? brandSettings?.email?.footer?.markdown
+          ),
         });
       }
     }, [templateData, setBrandEditorForm, brandEditorContent, brandEditorForm]);
