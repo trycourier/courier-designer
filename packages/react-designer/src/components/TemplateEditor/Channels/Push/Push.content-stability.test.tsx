@@ -322,4 +322,27 @@ describe("Push read-only version preview (C-19931)", () => {
     });
     expect(screen.getByTestId("content-text")).not.toHaveTextContent("BODY TWO");
   });
+
+  it("does not auto-save the empty placeholder doc while the template is loading (C-21461)", async () => {
+    store.set(isTemplateLoadingAtom, true);
+    store.set(templateEditorContentAtom, null);
+    let onUpdate: PushRenderProps["onUpdate"] | undefined;
+    const Capture = (props: PushRenderProps) => {
+      onUpdate = props.onUpdate;
+      return null;
+    };
+
+    render(
+      <Provider store={store}>
+        <Push routing={{ method: "single", channels: ["push"] }} render={Capture} />
+      </Provider>
+    );
+
+    // Tiptap's setup transaction on the placeholder paragraph fires onUpdate.
+    const editor = { getJSON: () => ({ type: "doc", content: [{ type: "paragraph" }] }) };
+    act(() => onUpdate!({ editor } as unknown as Parameters<PushRenderProps["onUpdate"]>[0]));
+
+    expect(store.get(pendingAutoSaveAtom)).toBeNull();
+    expect(store.get(templateEditorContentAtom)).toBeNull();
+  });
 });
