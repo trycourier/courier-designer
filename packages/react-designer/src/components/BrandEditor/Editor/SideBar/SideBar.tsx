@@ -32,6 +32,7 @@ import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
 import { BrandEditorFormAtom, BrandEditorContentAtom } from "../../store";
+import { addPreferencesLink, removePreferencesLinks } from "../../footerPreferencesLink";
 
 const HeaderStyle = ({
   isActive,
@@ -86,54 +87,9 @@ export const SideBarComponent = () => {
       if (!brandEditor) {
         return;
       }
-      if (status) {
-        const content = brandEditor.getJSON();
-        const newContent = {
-          type: "doc",
-          content: [
-            ...(content.content || []),
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: "Manage Notification Preferences",
-                  marks: [
-                    {
-                      type: "link",
-                      attrs: {
-                        href: "{{urls.preferences}}",
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        };
-
-        brandEditor.chain().focus().setContent(newContent).run();
-      } else {
-        const content = brandEditor.getJSON();
-
-        // Filter out any paragraph that contains the preferences URL
-        const filteredContent =
-          content.content?.filter((node) => {
-            if (node.type !== "paragraph") return true;
-
-            const hasPreferencesLink = node.content?.some(
-              (textNode) =>
-                textNode.type === "text" &&
-                textNode.marks?.some(
-                  (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
-                )
-            );
-
-            return !hasPreferencesLink;
-          }) || [];
-
-        brandEditor.chain().focus().setContent({ type: "doc", content: filteredContent }).run();
-      }
+      const doc = brandEditor.getJSON() as TiptapDoc;
+      const newContent = status ? addPreferencesLink(doc) : removePreferencesLinks(doc);
+      brandEditor.chain().focus().setContent(newContent).run();
 
       // Explicitly update the content atom to ensure autosave works
       setBrandEditorContent(convertTiptapToMarkdown(brandEditor.getJSON() as TiptapDoc));

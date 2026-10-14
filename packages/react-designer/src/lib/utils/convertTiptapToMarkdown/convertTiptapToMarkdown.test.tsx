@@ -265,7 +265,7 @@ describe("convertTiptapToMarkdown", () => {
 
     const result = convertTiptapToMarkdown(doc);
 
-    expect(result).toBe("Hello {{name}}, welcome!");
+    expect(result).toBe("Hello {name}, welcome!");
   });
 
   it("should drop variable nodes without an id (never emit {{}}/{{undefined}})", () => {
@@ -686,7 +686,7 @@ describe("convertTiptapToMarkdown", () => {
     const result = convertTiptapToMarkdown(doc);
 
     expect(result).toBe(
-      "# Welcome {{name}}!\n\n" +
+      "# Welcome {name}!\n\n" +
         "This is a **bold** statement with *italic* emphasis.\n\n" +
         "Visit our [website](https://example.com) for more info.\n\n" +
         "> This is an important quote\n> \n> \n\n" + // Implementation adds extra blockquote lines with space
@@ -752,7 +752,7 @@ describe("convertTiptapToMarkdown", () => {
 
     const result = convertTiptapToMarkdown(doc);
 
-    expect(result).toBe("Hello {{bold_name}} and {{italic_name}}!"); // Implementation doesn't apply marks to variables
+    expect(result).toBe("Hello {bold_name} and {italic_name}!"); // Implementation doesn't apply marks to variables
   });
 
   it("should handle text without text property", () => {
@@ -826,5 +826,25 @@ describe("convertTiptapToMarkdown", () => {
     const result = convertTiptapToMarkdown(doc);
 
     expect(result).toBe("> This is **important** quote\n> \n>"); // Implementation adds extra blockquote lines
+  });
+
+  it("rewrites a double-brace link href to the single-brace form brand footers resolve", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Manage",
+              marks: [{ type: "link", attrs: { href: "{{urls.preferences}}" } }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(convertTiptapToMarkdown(doc)).toBe("[Manage]({urls.preferences})");
   });
 });
