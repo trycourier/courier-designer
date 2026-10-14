@@ -42,9 +42,10 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       if (templateData && tenantId !== templateData?.data?.tenant?.tenantId) {
         setTemplateData(null);
         setBrandEditorContent(null);
+        setBrandEditorForm(null);
         isInitialLoadRef.current = false;
       }
-    }, [templateData, tenantId, setTemplateData, setBrandEditorContent]);
+    }, [templateData, tenantId, setTemplateData, setBrandEditorContent, setBrandEditorForm]);
 
     const onSave = useCallback(
       async (data: BrandSettings) => {
@@ -64,24 +65,33 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       onError,
     });
 
-    // Simple effect with only the essential logic
+    // Once per tenant: a failed load leaves templateData empty, which would
+    // otherwise refetch in a loop.
+    const fetchedTenantRef = useRef<string | null>(null);
     useEffect(() => {
-      // Skip if no tenant or already loading
-      if (!tenantId || isTemplateLoading || (templateData && isTemplateLoading === false)) {
+      if (
+        !tenantId ||
+        isTemplateLoading ||
+        (templateData && isTemplateLoading === false) ||
+        fetchedTenantRef.current === tenantId
+      ) {
         return;
       }
 
+      fetchedTenantRef.current = tenantId;
       getTemplate();
     }, [tenantId, getTemplate, isTemplateLoading, templateData]);
 
+    // Auto-save only once the form and footer hold the loaded brand; an empty
+    // footer ("") counts as loaded.
     useEffect(() => {
-      if (!brandEditorContent) {
+      if (!brandEditorForm || brandEditorContent === null) {
         return;
       }
       setTimeout(() => {
         isResponseSetRef.current = true;
       }, 500);
-    }, [brandEditorContent]);
+    }, [brandEditorForm, brandEditorContent]);
 
     useEffect(() => {
       if (!isResponseSetRef.current || !brandEditorForm) {
@@ -122,10 +132,15 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       }
     }, [isTemplateLoading]);
 
+    const isBrandLoaded =
+      isTemplateLoading === false && templateData?.data?.tenant?.tenantId === tenantId;
+
     useEffect(() => {
-      // Only set form values if brandEditorForm is not already populated
-      if (!brandEditorForm) {
+      // Seed once, from the loaded brand. Seeding earlier would fill the form with
+      // defaults that the first edit then saves over the brand (C-21459).
+      if (!brandEditorForm && isBrandLoaded) {
         const brandSettings = templateData?.data?.tenant?.brand?.settings;
+        const footerMarkdown = brandEditorContent ?? brandSettings?.email?.footer?.markdown ?? "";
 
         setBrandEditorForm({
           brandColor: brandSettings?.colors?.primary || defaultBrandEditorFormValues.brandColor,
@@ -149,12 +164,18 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
           xLink:
             brandSettings?.email?.footer?.social?.twitter?.url ||
             defaultBrandEditorFormValues.xLink,
-          isPreferences: markdownHasPreferencesLink(
-            brandEditorContent ?? brandSettings?.email?.footer?.markdown
-          ),
+          isPreferences: markdownHasPreferencesLink(footerMarkdown),
         });
+        setBrandEditorContent(footerMarkdown);
       }
-    }, [templateData, setBrandEditorForm, brandEditorContent, brandEditorForm]);
+    }, [
+      templateData,
+      isBrandLoaded,
+      setBrandEditorForm,
+      setBrandEditorContent,
+      brandEditorContent,
+      brandEditorForm,
+    ]);
 
     return (
       <MainLayout

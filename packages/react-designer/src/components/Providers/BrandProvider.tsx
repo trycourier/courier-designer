@@ -1,7 +1,8 @@
-import { Provider, useAtom, createStore } from "jotai";
+import { Provider, useAtom, useAtomValue, createStore } from "jotai";
 import { useEffect, memo, useMemo } from "react";
+import { toast } from "sonner";
 import type { BasicProviderProps } from "./Providers.types";
-import { apiUrlAtom, tenantIdAtom, tokenAtom } from "./store";
+import { apiUrlAtom, templateErrorAtom, tenantIdAtom, tokenAtom } from "./store";
 
 // Configuration provider component
 type BrandProviderProps = BasicProviderProps;
@@ -25,6 +26,14 @@ const BrandProviderContext: React.FC<BrandProviderProps> = ({
       setApiUrl(apiUrl);
     }
   }, [token, tenantId, apiUrl, setApiUrl, setToken, setTenantId]);
+
+  // Same as TemplateProvider: load and save errors would otherwise be silent.
+  const templateError = useAtomValue(templateErrorAtom);
+  useEffect(() => {
+    if (templateError) {
+      toast.error(templateError.message, templateError.toastProps);
+    }
+  }, [templateError]);
 
   return <>{children}</>;
 };
