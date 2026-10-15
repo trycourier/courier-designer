@@ -254,7 +254,8 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (isTemplateTransitioning) {
+        // The placeholder doc mounted while loading would auto-save as an empty body (C-21461).
+        if (isTemplateLoading !== false || isTemplateTransitioning) {
           return;
         }
 
@@ -292,7 +293,13 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [
+        templateEditorContent,
+        setTemplateEditorContent,
+        setPendingAutoSave,
+        isTemplateLoading,
+        isTemplateTransitioning,
+      ]
     );
 
     // While read-only — version history, Preview & Test — the host swaps `value`
