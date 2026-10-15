@@ -1,5 +1,17 @@
 # @trycourier/react-designer
 
+## 0.10.1
+
+### Patch Changes
+
+- 2ffc43f: Standalone `<BrandProvider><BrandEditor/>` no longer overwrites a brand with defaults. The editor filled its form before the brand loaded and never refilled it, and the footer editor's own setup update replaced the loaded footer with an empty one, so the first edit auto-saved default colors, an empty header and logo, empty social links and a blank footer over the brand's draft. The form and footer are now filled from the loaded brand, and auto-save starts only after that. Until then the canvas and sidebar show a loader instead of inputs, so nothing can be edited mid-load; a failed load says so instead of spinning, and no longer refetches in a loop. The brand query no longer requests a template when there is none (which errored), and `BrandProvider` now shows load and save errors as toasts. [C-21459]
+- c77fcef: Brand editor: the "Manage Preferences" footer toggle now writes `{$.urls.preferences}` instead of `{{urls.preferences}}`, which brand footers never resolved and shipped as a dead link. The toggle also recognises existing preferences links in either brace form, and turning it on or off replaces a legacy `{{urls.preferences}}` link instead of leaving it behind. Footer variables and link hrefs are now saved in the single-brace `{path}` form brand footers render, and `{path}` loads back as a variable chip. [C-21458]
+- 7498e1d: The In-app editor keeps the body's translations when it saves; any edit used to drop them while the title and button kept theirs.
+- bc941e7: Adds `Select` to the UI kit: the designer's standard dropdown for picking one value from a short list, drawn like the sidebar's existing font picker. The In-app sidebar now uses it for each button's style, labelled "Button style", in place of the 2×2 tile picker. The four options and the values they save are unchanged.
+- 9168a1a: SMS and Push editors no longer open blank when a text block contains markdown such as `**bold**`; the markers stay as literal text.
+- 675e882: Opening an SMS or Push template no longer auto-saves an empty body. The editor mounted with an empty placeholder while the template loaded, and its setup update queued that empty content as an auto-save, which replaced the draft's SMS or Push text once loading finished. SMS and Push now ignore editor updates until the template has loaded, as Email already did. [C-21461]
+- 0c2dcc7: A `var`/`inline-var` path with an array index, such as `{{var "tokens.expo[0].status"}}`, is now listed as a template variable and resolves in preview; it used to be treated as malformed although the send prints it.
+
 ## 0.10.0
 
 ### Minor Changes
