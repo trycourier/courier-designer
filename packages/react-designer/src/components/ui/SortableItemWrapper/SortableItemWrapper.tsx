@@ -19,6 +19,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
+  monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   attachClosestEdge,
@@ -31,6 +32,30 @@ import { Handle } from "../Handle";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
 import { resolveColumnDropZone } from "./resolveColumnDropZone";
+
+const GROUP_EDGE_PX = 12;
+
+/**
+ * A group's content box and the depth of its before/after strips. Measured on
+ * the content, not the wrapper: the wrapper also holds drop placeholders, which
+ * would grow it under the pointer and flip the decision mid-drag. Small groups
+ * get thinner strips so most of them still means "inside".
+ */
+function groupZone(group: Element) {
+  const box = group.querySelector(":scope > div > .draggable-content-wrapper") ?? group;
+  const { top, bottom } = box.getBoundingClientRect();
+  return { top, bottom, edge: Math.min(GROUP_EDGE_PX, (bottom - top) / 4) };
+}
+
+/** The group's own blocks, in document order (not a nested group's). */
+function groupBlocks(group: Element): Element[] {
+  const content = group.querySelector(
+    ":scope > div > .draggable-content-wrapper > .node-element > .c--group-content > div"
+  );
+  return content
+    ? [...content.children].filter((el) => el.classList.contains("react-renderer"))
+    : [];
+}
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -181,6 +206,9 @@ export const SortableItemWrapper = ({
                 break;
               case "list":
                 nodeType = "list";
+                break;
+              case "group":
+                nodeType = "group";
                 break;
             }
           }
@@ -362,10 +390,11 @@ export const SortableItemWrapper = ({
             if (mouseY >= elementMidpoint) {
               // If mouse is significantly below the element, definitely use bottom edge
               if (mouseY > rect.bottom) {
-                return {
-                  ...data,
-                  [Symbol.for("closestEdge")]: "bottom",
-                };
+                return attachClosestEdge(data, {
+                  input,
+                  element: targetElement,
+                  allowedEdges: ["bottom"],
+                });
               }
               // If mouse is in the lower half of the element, prefer bottom edge
               // but still use attachClosestEdge for proper calculation
@@ -374,17 +403,73 @@ export const SortableItemWrapper = ({
 
           // Attach closest edge information for proper drop positioning
           // Allow bottom edge only for the last element
-          const edges: Edge[] = isLastElement() ? ["top", "bottom"] : ["top"];
+          // A group picks its edge from its content box: its own placeholder
+          // grows the wrapper and would otherwise flip the edge under the pointer.
+          // A group's strips mean before/after it. Anywhere else no block of its
+          // own took the drop (it is empty, or the pointer is over the block being
+          // dragged), so it lands inside, in the nearest gap.
+          if (info?.node.type.name === "group") {
+            const { top, bottom, edge } = groupZone(targetElement);
+            const y = input.clientY;
+            if (y - top < edge || bottom - y < edge) {
+              return attachClosestEdge(data, {
+                input,
+                element: targetElement,
+                allowedEdges: [y - top < edge ? "top" : "bottom"],
+              });
+            }
+            const blocks = groupBlocks(targetElement);
+            let index = blocks.findIndex((block) => {
+              const r = block.getBoundingClientRect();
+              return y < r.top + r.height / 2;
+            });
+            if (index === -1) index = blocks.length;
+            const lineY =
+              index < blocks.length
+                ? blocks[index].getBoundingClientRect().top
+                : (blocks[blocks.length - 1]?.getBoundingClientRect().bottom ?? (top + bottom) / 2);
+            let insertPos = (info.pos ?? 0) + 1;
+            for (let i = 0; i < index && i < info.node.childCount; i++) {
+              insertPos += info.node.child(i).nodeSize;
+            }
+            return { ...data, insertPos, groupDropY: lineY - top };
+          }
 
+          // A group also offers its bottom edge: its bottom strip means "after the
+          // group", which no sibling's top edge reaches when it is the last block.
+          const edges: Edge[] =
+            isLastElement() || info?.node.type.name === "group" ? ["top", "bottom"] : ["top"];
+
+          // Measured on the block's content, not its wrapper: the wrapper also
+          // holds this block's own drop placeholder, which would move the
+          // midpoint under the pointer and flip the edge back and forth.
           return attachClosestEdge(data, {
             input,
-            element: targetElement,
+            element:
+              targetElement.querySelector(":scope > div > .draggable-content-wrapper") ??
+              targetElement,
             allowedEdges: edges,
           });
         },
-        canDrop: ({ source }) => {
+        canDrop: ({ source, input }) => {
           // If drop target is disabled, reject all drops
           if (disableDropTarget) {
+            return false;
+          }
+
+          // Near a group's top or bottom edge the group itself takes the drop,
+          // so a block can land just before or after the group instead of
+          // always inside it.
+          const group = element.parentElement?.closest('[data-node-type="group"]');
+          if (group) {
+            const { top, bottom, edge } = groupZone(group);
+            if (input.clientY - top < edge || bottom - input.clientY < edge) {
+              return false;
+            }
+          }
+
+          // A block cannot be dropped inside itself (a group onto its own blocks)
+          if (source.element !== element && source.element.contains(element)) {
             return false;
           }
 
@@ -675,11 +760,24 @@ export const SortableItemWrapper = ({
             (source.data.type === "editor" || source.data.type === "column-cell-item") &&
             typeof source.data.index === "number"
           ) {
-            const sourceIndex = source.data.index;
+            // Indices are per parent: only a sibling in the same parent is "right
+            // after" the dragged block (a group's second block is not right after
+            // the top-level block before the group).
             const targetInfo = findNodeInfo();
-            const targetIndex = targetInfo?.index ?? 0;
-
-            if (targetIndex === sourceIndex + 1 && edge === "top") {
+            let sourceParent: Node | null = null;
+            let sourceIndex = -1;
+            editor.state.doc.descendants((node, _pos, parent, index) => {
+              if (node.attrs?.id !== source.data.id) return true;
+              sourceParent = parent;
+              sourceIndex = index;
+              return false;
+            });
+            if (
+              targetInfo &&
+              sourceParent === targetInfo.parent &&
+              targetInfo.index === sourceIndex + 1 &&
+              edge === "top"
+            ) {
               newEdge = null;
             }
           }
@@ -690,11 +788,16 @@ export const SortableItemWrapper = ({
             setClosestEdge(newEdge);
           }
         },
-        onDragLeave: () => {
+        onDragLeave: ({ location }) => {
           // For the last element with stable bottom edge, don't clear immediately
           // This prevents flickering when mouse briefly leaves the element bounds
           // Use a timeout to clear if mouse doesn't return within a reasonable time
-          if (isLastElement() && bottomEdgeStableRef.current) {
+          // Inside a group, below the last block is the group's own bottom edge
+          // (outside it), so the block does not hold its indicator there.
+          const isInGroup = !!element.parentElement?.closest('[data-node-type="group"]');
+          // Leaving upward (back into the blocks above) is never a drop below it.
+          const leftUpward = location.current.input.clientY < element.getBoundingClientRect().top;
+          if (isLastElement() && bottomEdgeStableRef.current && !isInGroup && !leftUpward) {
             // Check if mouse is still below the element (user wants to drop at bottom)
             const elementRect = element?.getBoundingClientRect();
             const mouseY = lastMouseYRef.current;
@@ -740,6 +843,37 @@ export const SortableItemWrapper = ({
             bottomEdgeClearTimeoutRef.current = null;
           }
           // Reset bottom edge stability
+          bottomEdgeStableRef.current = false;
+          lastEdgeRef.current = null;
+          stableCellBandRef.current = null;
+          setClosestEdge(null);
+          setDragType(null);
+        },
+      }),
+      // Where a drop inside a group would land, drawn by the group's own chrome
+      // (the blocks' DOM belongs to ProseMirror, so nothing is inserted there).
+      monitorForElements({
+        canMonitor: () => element.getAttribute("data-node-type") === "group",
+        onDrag: ({ location }) => {
+          const target = location.current.dropTargets[0];
+          const y = target?.element === element ? target.data.groupDropY : undefined;
+          if (typeof y === "number") {
+            element.style.setProperty("--c-group-drop-y", `${y}px`);
+            element.setAttribute("data-group-drop-inside", "");
+          } else {
+            element.removeAttribute("data-group-drop-inside");
+          }
+        },
+        onDrop: () => element.removeAttribute("data-group-drop-inside"),
+      }),
+      // A drop elsewhere never reaches this target's onDrop, which left its
+      // indicator (kept on leave for the last block) on the canvas.
+      monitorForElements({
+        onDrop: () => {
+          if (bottomEdgeClearTimeoutRef.current) {
+            clearTimeout(bottomEdgeClearTimeoutRef.current);
+            bottomEdgeClearTimeoutRef.current = null;
+          }
           bottomEdgeStableRef.current = false;
           lastEdgeRef.current = null;
           stableCellBandRef.current = null;
@@ -1090,6 +1224,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               node?.type.name !== "spacer" &&
               node?.type.name !== "button" &&
               node?.type.name !== "column" &&
+              node?.type.name !== "group" &&
               node?.type.name !== "customCode" &&
               node?.type.name !== "jsonnet" && (
                 <>

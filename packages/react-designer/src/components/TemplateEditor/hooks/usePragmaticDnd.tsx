@@ -8,6 +8,7 @@ import { defaultJsonnetProps } from "@/components/extensions/Jsonnet/Jsonnet";
 import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
 import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
 import { defaultListProps } from "@/components/extensions/List/List";
+import { defaultGroupProps } from "@/components/extensions/Group/Group.types";
 import { defaultTextBlockProps } from "@/components/extensions/TextBlock";
 import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import type { TiptapDoc } from "@/types/tiptap.types";
@@ -206,6 +207,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         case "blockquote":
           attrs = defaultBlockquoteProps as unknown as Record<string, unknown>;
           break;
+        case "group":
+          attrs = defaultGroupProps as unknown as Record<string, unknown>;
+          break;
         case "list":
           attrs = defaultListProps as unknown as Record<string, unknown>;
           break;
@@ -250,6 +254,11 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           }
         }
         result.content = [{ type: "text", text: buttonText }];
+      }
+
+      // A new group starts with one empty paragraph to type into or drop beside
+      if (baseBlockType === "group") {
+        result.content = [{ type: "paragraph", attrs: { id: uuidv4() }, content: [] }];
       }
 
       // Add default content for list (must have at least one list item with a paragraph)
@@ -614,8 +623,10 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           // Prevent dropping inside lists - adjust position to after the list
           targetPos = adjustPositionIfInsideList(targetPos);
 
-          // Prevent dropping into itself
-          if (targetPos > sourcePos && targetPos < sourcePos + sourceNode.nodeSize) {
+          // Prevent dropping into itself, or onto either of its own edges (a move
+          // to where it already is — which, for a group's only block, emptied
+          // the group and re-inserted the block outside it)
+          if (targetPos >= sourcePos && targetPos <= sourcePos + sourceNode.nodeSize) {
             return;
           }
 

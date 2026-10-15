@@ -1134,6 +1134,18 @@ describe("extractVariablesFromContent", () => {
         expect(result).toEqual(["items"]);
       });
 
+      it("should extract a bare loop path as the variable it names", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "group",
+            loop: "data.products",
+            elements: [{ type: "text", content: "{{$.item.name}}" }],
+          },
+        ];
+
+        expect(extractVariablesFromContent(elements)).toEqual(["data.products"]);
+      });
+
       it("should extract variables from both if and content", () => {
         const elements: ElementalNode[] = [
           {

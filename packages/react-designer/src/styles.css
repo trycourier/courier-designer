@@ -150,6 +150,62 @@
   .ProseMirror > .react-renderer > .draggable-item > div > [data-drag-handle] {
     left: calc(-1 * var(--courier-drag-gutter));
   }
+
+  /* A top-level group's blocks are sent as if they sat outside it, so they line
+     up with top-level blocks and share the gutter. The group's own handle moves
+     out past theirs. */
+  .ProseMirror
+    > .react-renderer.node-group
+    .c--group-content
+    > div
+    > .react-renderer
+    > .draggable-item {
+    &::after {
+      content: "";
+      @apply courier-absolute courier-top-0 courier-bottom-0;
+      left: calc(-1 * var(--courier-drag-gutter));
+      width: var(--courier-drag-gutter);
+    }
+
+    > div {
+      @apply courier-pl-0;
+    }
+
+    > div > .courier-drag-indicator {
+      @apply courier-ml-0;
+    }
+
+    > div > [data-drag-handle] {
+      left: calc(-1 * var(--courier-drag-gutter));
+    }
+  }
+
+  /* The group's own gutter strip would paint over its blocks' (it comes after
+     them), taking their hover and handles. The side strips stand in for it. */
+  .ProseMirror > .react-renderer.node-group > .draggable-item::after {
+    display: none;
+  }
+
+  .ProseMirror > .react-renderer.node-group > .draggable-item > div > [data-drag-handle] {
+    left: calc(-1 * var(--courier-drag-gutter) - 32px);
+  }
+
+  .ProseMirror
+    > .react-renderer.node-group
+    > .draggable-item:is(
+      .selected-element,
+      :has(
+        > div
+          > .draggable-content-wrapper
+          > .node-element
+          > :is(.c--group-hit, .c--loop-badge):hover
+      ),
+      :has(> div > [data-drag-handle]:hover)
+    )
+    > div
+    > [data-drag-handle] {
+    visibility: visible;
+  }
 }
 
 .courier-editor-loading {
@@ -479,6 +535,7 @@
       &.node-list,
       &.node-buttonRow,
       &.node-column,
+      &.node-group,
       &.node-customCode,
       &.node-jsonnet {
         * {
@@ -953,6 +1010,7 @@
     &.node-blockquote,
     &.node-list,
     &.node-column,
+    &.node-group,
     &.node-customCode,
     &.node-jsonnet {
       @apply courier-m-0 courier-relative;
@@ -2569,4 +2627,119 @@
 
 .dark .courier-issue-label-warning {
   color: #fbbf24;
+}
+
+/* Group chrome is editor-only and drawn outside the flow: the send renders a
+   group as its bare children, so the canvas must not add space for it. */
+.c--group-frame {
+  position: absolute;
+  inset: -4px -6px;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.c--loop-badge {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 60%;
+  padding: 1px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* The strips beside the blocks belong to the group: hovering one outlines the
+   group, pressing it selects the group. Sides only — above and below are the
+   neighbouring blocks' own hover area. The left strip sits out past the
+   blocks' drag gutter, where the group's handle is. */
+.c--group-hit {
+  position: absolute;
+  z-index: 25;
+}
+
+.c--group-hit-left {
+  top: 0;
+  bottom: 0;
+  left: -84px;
+  width: 36px;
+}
+
+.c--group-hit-right {
+  top: 0;
+  bottom: 0;
+  right: -12px;
+  width: 12px;
+}
+
+.draggable-item:has(> div > [data-drag-handle]:hover)
+  > div
+  > .draggable-content-wrapper
+  > .node-element
+  > .c--group-frame,
+.node-element:has(> .c--group-hit:hover) > .c--group-frame,
+.node-element:has(> .c--loop-badge:hover) > .c--group-frame {
+  inset: -4px -12px;
+  border: 2px solid #e5e5e5;
+}
+
+/* A looped list first in a group would put its badge on the group's. */
+.c--group-content > div > .react-renderer:first-child .c--block-list > .c--loop-badge {
+  top: auto;
+  bottom: -10px;
+}
+
+/* Selected, the block outline every node gets takes over from the frame. */
+.selected-element > div > .draggable-content-wrapper > .node-element > .c--group-frame {
+  display: none;
+}
+
+/* Filled so it reads as a tab on the selection outline; #0070e0, not #0085ff,
+   so white 11px text clears AA. */
+.selected-element > div > .draggable-content-wrapper > .node-element > .c--loop-badge {
+  border-color: #0070e0;
+  background: #0070e0;
+  color: #ffffff;
+}
+
+/* Selecting a group must not open the action panels of the blocks inside it. */
+.c--group-content .draggable-item:not(.selected-element) > div > .courier-actions-panel {
+  display: none !important;
+}
+
+/* The end-of-email drop indicator sits outside the blocks, so it has no
+   in-row handle strip to line up with. */
+.c--drop-end .courier-drag-indicator {
+  margin-left: 0;
+}
+
+/* Where a drop lands inside a group, positioned by the drag code. */
+.c--group-drop-line {
+  display: none;
+}
+
+[data-group-drop-inside] > div > .draggable-content-wrapper > .node-element > .c--group-drop-line {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--c-group-drop-y, 0px) - 1px);
+  height: 2px;
+  border-radius: 1px;
+  background: #0085ff;
+  pointer-events: none;
+  z-index: 30;
 }

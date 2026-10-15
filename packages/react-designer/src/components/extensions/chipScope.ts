@@ -1,7 +1,7 @@
 import type { Editor } from "@tiptap/core";
 
 /**
- * Whether the position sits inside a looping list, where `$.item` and `$.index`
+ * Whether the position sits inside a looping list or group, where `$.item` and `$.index`
  * are real names.
  *
  * Shared because the variable chip and the expression chip have to agree: the
@@ -13,7 +13,8 @@ export function isInsideLoopAt(editor: Editor, pos: number): boolean {
     const $pos = editor.state.doc.resolve(pos);
     for (let depth = $pos.depth; depth >= 0; depth--) {
       const ancestor = $pos.node(depth);
-      if (ancestor.type.name === "list" && ancestor.attrs.loop) return true;
+      if ((ancestor.type.name === "list" || ancestor.type.name === "group") && ancestor.attrs.loop)
+        return true;
     }
   } catch {
     /* the position is gone; it is not in a loop */

@@ -1,8 +1,10 @@
-import type { Fragment, Node } from "@tiptap/pm/model";
+import type { JSONContent } from "@tiptap/core";
+import { Fragment, type Node } from "@tiptap/pm/model";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../extensions/Button/Button";
 import { defaultColumnProps } from "../extensions/Column/Column";
+import { defaultGroupProps } from "../extensions/Group/Group.types";
 import { defaultHTMLProps } from "../extensions/HTML/HTML";
 import { defaultJsonnetProps } from "../extensions/Jsonnet/Jsonnet";
 import { defaultDividerProps, defaultSpacerProps } from "../extensions/Divider/Divider";
@@ -23,6 +25,13 @@ export const findNodePositionById = (editor: TiptapEditor, id: string): number |
 
   return foundPos;
 };
+
+/** Copies of a block's children need ids of their own; drag and select find nodes by id. */
+const withFreshIds = (json: JSONContent): JSONContent => ({
+  ...json,
+  ...(json.attrs?.id !== undefined && { attrs: { ...json.attrs, id: `node-${uuidv4()}` } }),
+  ...(json.content && { content: json.content.map(withFreshIds) }),
+});
 
 // Helper function to create a new node or duplicate an existing one
 export const createOrDuplicateNode = (
@@ -140,6 +149,19 @@ export const createOrDuplicateNode = (
       });
 
       return node;
+    },
+    group: () => {
+      const source = sourceNodeContent as Fragment | null | undefined;
+      const content = source?.childCount
+        ? Fragment.fromJSON(editor.schema, (source.toJSON() as JSONContent[]).map(withFreshIds))
+        : editor.schema.nodes.paragraph.create({
+            ...defaultTextBlockProps,
+            id: `node-${uuidv4()}`,
+          });
+      return editor.schema.nodes.group.create(
+        { ...defaultGroupProps, ...sourceNodeAttrs, id },
+        content
+      );
     },
   };
 

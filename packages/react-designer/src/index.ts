@@ -29,6 +29,7 @@ export { Tooltip } from "@/components/ui/Tooltip";
 export { TextMenu } from "@/components/ui/TextMenu";
 export { VariableInput, VariableTextarea } from "@/components/ui/VariableEditor";
 export { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
+export { extractLoopShapes, type LoopShape } from "@/components/utils/extractLoopShapes";
 export { Status as TemplateStatus } from "@/components/ui/Status";
 
 export {

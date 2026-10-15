@@ -4,6 +4,7 @@ export * from "./ButtonBlock";
 export * from "./ColumnBlock";
 export * from "./HTMLBlock";
 export * from "./DividerBlock";
+export * from "./GroupBlock";
 export * from "./HeadingBlock";
 export * from "./ImageBlock";
 export * from "./JsonnetBlock";

@@ -10,6 +10,7 @@ import {
   Column,
   ColumnRow,
   ColumnCell,
+  Group,
   HTML,
   Jsonnet,
   Divider,
@@ -151,6 +152,7 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     Column,
     ColumnRow,
     ColumnCell,
+    Group,
     HTML,
     Jsonnet,
     Link.configure({

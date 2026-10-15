@@ -1,6 +1,7 @@
 import { renderHandlebarsPreview, renderTitlePreview } from "./renderPreview";
 import { convertSingleBraceVariables } from "./singleBraceVariables";
 import { hasUnbalancedBlock } from "./validateHandlebars";
+import { resolveDataPath } from "@/components/utils/resolveDataPath";
 
 /**
  * Elemental fields the renderer evaluates handlebars in. Anything not listed
@@ -100,7 +101,7 @@ function renderStringRun(
  */
 export function renderElementalPreview<T>(
   content: T,
-  data: Record<string, unknown> = {}
+  rootData: Record<string, unknown> = {}
 ): ElementalPreviewResult<T> {
   const approximated = new Set<string>();
   const errors: string[] = [];
@@ -110,7 +111,12 @@ export function renderElementalPreview<T>(
     if (error) errors.push(error);
   };
 
-  const walk = (value: unknown, key?: string, parent?: Record<string, unknown>): unknown => {
+  const walk = (
+    value: unknown,
+    key?: string,
+    parent?: Record<string, unknown>,
+    data: Record<string, unknown> = rootData
+  ): unknown => {
     if (typeof value === "string") {
       if (!key || !RENDERABLE_KEYS.has(key)) return value;
       const parentType = parent?.type;
@@ -139,7 +145,9 @@ export function renderElementalPreview<T>(
         const joined = renderStringRun(value, data, collect);
         if (joined) return joined;
       }
-      return value.map((item) => walk(item));
+      return value.flatMap(
+        (item) => expandLoop(item, data) ?? [walk(item, undefined, undefined, data)]
+      );
     }
 
     if (value && typeof value === "object") {
@@ -147,7 +155,7 @@ export function renderElementalPreview<T>(
       const node = value as Record<string, unknown>;
       const before = errors.length;
       for (const [k, v] of Object.entries(node)) {
-        out[k] = walk(v, k, node);
+        out[k] = walk(v, k, node, data);
       }
       // Marked for the whole subtree: a node whose child failed keeps its own
       // text as source too, and a clean child clears the flag again for itself.
@@ -156,6 +164,23 @@ export function renderElementalPreview<T>(
     }
 
     return value;
+  };
+
+  /**
+   * A looped group is sent once per item, with `$.item`/`$.index` in scope, so
+   * preview repeats it the same way. Without sample data to loop over it is left
+   * as one unexpanded copy.
+   */
+  const expandLoop = (value: unknown, data: Record<string, unknown>): unknown[] | null => {
+    const node = value as Record<string, unknown> | null;
+    if (!node || node.type !== "group" || typeof node.loop !== "string") return null;
+    const items = resolveDataPath(data, node.loop).value;
+    if (!Array.isArray(items)) return null;
+    const { loop: _loop, ...rest } = node;
+    void _loop;
+    return items.map((item, index) =>
+      walk(rest, undefined, undefined, { ...data, $: { item, index } })
+    );
   };
 
   return {

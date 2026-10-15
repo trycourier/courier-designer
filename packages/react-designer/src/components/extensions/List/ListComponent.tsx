@@ -7,6 +7,7 @@ import { setSelectedNodeAtom, selectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { getTierStyleVars } from "@/lib/constants/email-editor-tiptap-styles";
 import { emailLineHeightAtom } from "../../TemplateEditor/store";
+import { LoopBadge } from "../shared/LoopBadge";
 
 /**
  * List NodeView component that renders the list.
@@ -22,7 +23,8 @@ export const ListComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
 
-  const { listType, id, paddingVertical, paddingHorizontal, fontSize, lineHeight } = node.attrs;
+  const { listType, id, paddingVertical, paddingHorizontal, fontSize, lineHeight, loop } =
+    node.attrs;
   // See getTierStyleVars: a block-derived line height must not beat an explicit
   // document base, because the renderer resolves the base in before auto-scaling.
   const documentLineHeight = useAtomValue(emailLineHeightAtom);
@@ -103,7 +105,8 @@ export const ListComponentNode = (props: NodeViewProps) => {
       onClick={handleSelect}
       editor={props.editor}
     >
-      <div className="node-element c--block c--block-list">
+      <div className="node-element c--block c--block-list courier-relative">
+        <LoopBadge loop={loop} />
         <ListTag
           className={cn(
             "courier-list-wrapper",

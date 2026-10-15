@@ -23,6 +23,7 @@ export { Document } from "./Document";
 export * from "./DragPlaceholder";
 export { FileHandler } from "./FileHandler";
 export { FixedChannelPaste } from "./FixedChannelPaste";
+export { Group } from "./Group";
 export { FixedChannelSelection } from "./FixedChannelSelection";
 export { Heading } from "./Heading";
 export { ImageBlock } from "./ImageBlock";
