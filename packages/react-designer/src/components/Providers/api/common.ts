@@ -52,11 +52,11 @@ export const getTemplateAtom = atom(
         },
         body: JSON.stringify({
           query: `
-            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!, $includeBrand: Boolean!) {
+            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!, $includeBrand: Boolean!, $includeNotification: Boolean!) {
               tenant(tenantId: $tenantId) {
                 tenantId
                 name
-                notification(input: $input) {
+                notification(input: $input) @include(if: $includeNotification) {
                   createdAt
                   publishedAt
                   notificationId
@@ -123,6 +123,8 @@ export const getTemplateAtom = atom(
               version: "latest",
             },
             includeBrand,
+            // A standalone BrandEditor has no template; an empty id errors the query.
+            includeNotification: Boolean(templateId),
           },
         }),
       });

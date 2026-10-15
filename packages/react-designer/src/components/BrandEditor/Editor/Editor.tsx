@@ -19,9 +19,9 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect } from "react";
 import { pageAtom } from "../../../store";
 import { Header } from "../../ui/Header";
+import { Loader } from "../../ui/Loader";
 import { Status } from "../../ui/Status";
 import type { BrandEditorFormValues } from "../BrandEditor.types";
-import { defaultBrandEditorFormValues } from "../BrandEditor.types";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../store";
 import { BrandFooter } from "./BrandFooter";
 import { LogoUploader } from "./LogoUploader";
@@ -84,19 +84,30 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
 
     const handleLogoSelect = useCallback(
       (dataUrl: string) => {
-        setBrandEditorForm((prevForm) =>
-          prevForm
-            ? {
-                ...prevForm,
-                logo: dataUrl,
-              }
-            : {
-                ...defaultBrandEditorFormValues,
-                logo: dataUrl,
-              }
-        );
+        // No form yet means the brand hasn't loaded; a default form would skip seeding.
+        setBrandEditorForm((prevForm) => (prevForm ? { ...prevForm, logo: dataUrl } : prevForm));
       },
       [setBrandEditorForm]
+    );
+
+    // Inputs stay unmounted until the form is seeded from the loaded brand, so
+    // nothing typed before then can be lost or saved over it.
+    const isBrandPending = !brandEditorForm;
+    const hasLoadFailed =
+      isBrandPending && isTemplateLoading === false && !templateData && Boolean(templateError);
+    const renderPending = (className?: string) => (
+      <div
+        className={cn("courier-flex courier-w-full courier-justify-center", className)}
+        aria-busy={!hasLoadFailed}
+      >
+        {hasLoadFailed ? (
+          <div className="courier-text-sm courier-text-muted-foreground">
+            Couldn't load the brand.
+          </div>
+        ) : (
+          <Loader />
+        )}
+      </div>
     );
 
     const handleBack = useCallback(() => {
@@ -164,7 +175,9 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                     style={{ backgroundColor: brandEditorForm.brandColor }}
                   />
                 )}
-                {brandEditorForm?.logo ? (
+                {isBrandPending ? (
+                  renderPending()
+                ) : brandEditorForm.logo ? (
                   <img
                     src={brandEditorForm.logo}
                     alt="Brand logo"
@@ -178,25 +191,26 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                 Footer
               </div>
               <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-6 courier-px-8 courier-pb-8">
-                <BrandFooter
-                  value={
-                    brandEditorContent ??
-                    templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
-                  }
-                  variables={variables}
-                  facebookLink={brandEditorForm?.facebookLink}
-                  linkedinLink={brandEditorForm?.linkedinLink}
-                  instagramLink={brandEditorForm?.instagramLink}
-                  mediumLink={brandEditorForm?.mediumLink}
-                  xLink={brandEditorForm?.xLink}
-                  onUpdate={onUpdateHandler}
-                />
+                {isBrandPending ? (
+                  renderPending()
+                ) : (
+                  <BrandFooter
+                    value={brandEditorContent}
+                    variables={variables}
+                    facebookLink={brandEditorForm.facebookLink}
+                    linkedinLink={brandEditorForm.linkedinLink}
+                    instagramLink={brandEditorForm.instagramLink}
+                    mediumLink={brandEditorForm.mediumLink}
+                    xLink={brandEditorForm.xLink}
+                    onUpdate={onUpdateHandler}
+                  />
+                )}
               </div>
             </div>
           </div>
           <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
             <div className="courier-p-4 courier-h-full">
-              {brandEditor && <SideBar />}
+              {isBrandPending ? renderPending("courier-pt-8") : brandEditor && <SideBar />}
               {/* {brandEditor && selectedNode && (
                 <SideBarItemDetails element={selectedNode} editor={brandEditor} />
               )} */}
