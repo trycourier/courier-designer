@@ -30,6 +30,7 @@ import {
   PushLayout,
   SlackLayout,
   SMSLayout,
+  WhatsappLayout,
 } from "./Channels";
 import { useFonts } from "./hooks/useFonts";
 import {
@@ -660,6 +661,23 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   if (page === "template" && channel === "sms") {
     return (
       <SMSLayout
+        colorScheme={colorScheme}
+        variables={variables}
+        variableViewMode={variableViewMode}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        readOnly={readOnly}
+        {...rest}
+      />
+    );
+  }
+
+  if (page === "template" && channel === "whatsapp") {
+    return (
+      <WhatsappLayout
         colorScheme={colorScheme}
         variables={variables}
         variableViewMode={variableViewMode}

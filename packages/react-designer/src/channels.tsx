@@ -5,9 +5,17 @@ import {
   PushIcon,
   SlackIcon,
   SMSIcon,
+  WhatsappIcon,
 } from "./components/ui-kit/Icon";
 
-export type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams";
+export type ChannelType =
+  | "email"
+  | "sms"
+  | "push"
+  | "inbox"
+  | "slack"
+  | "msteams"
+  | "whatsapp";
 
 export interface Channel {
   label: string;
@@ -45,5 +53,10 @@ export const CHANNELS: Channel[] = [
     label: "Teams",
     value: "msteams",
     icon: <MSTeamsIcon />,
+  },
+  {
+    label: "WhatsApp",
+    value: "whatsapp",
+    icon: <WhatsappIcon />,
   },
 ];
