@@ -12,6 +12,7 @@ import {
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { Editor } from "@tiptap/react";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { updateElemental } from "@/lib/utils";
 
 // Mock pragmatic-drag-and-drop
 vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
@@ -1121,6 +1122,170 @@ describe("usePragmaticDnd", () => {
       // Should NOT set text selection since editor is destroyed
       expect(mockSetTextSelection).not.toHaveBeenCalled();
       expect(mockViewFocus).not.toHaveBeenCalled();
+    });
+    // A channel whose stored elements are not the editor's builds the whole list itself.
+    it("saves what toChannelElements returns on a sidebar drop", () => {
+      vi.useFakeTimers();
+      const { editor: dropEditor } = createDropTestEditor("paragraph");
+      const dropStore = createStore();
+      const existing = { version: "2022-01-01" as const, elements: [] };
+      dropStore.set(templateEditorContentAtom, existing);
+      const channelElements = [{ type: "meta" as const, title: "Kept" }];
+      const toChannelElements = vi.fn(() => channelElements);
+
+      renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["text"], Editor: ["existing-heading"] },
+            setItems: vi.fn(),
+            editor: dropEditor as unknown as Editor,
+            toChannelElements,
+          }),
+        { wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider> }
+      );
+
+      act(() => getOnDrop()(createSidebarDropEvent("text")));
+
+      expect(toChannelElements).toHaveBeenCalledWith(existing, []);
+      expect(vi.mocked(updateElemental)).toHaveBeenCalledWith(
+        existing,
+        expect.objectContaining({ elements: channelElements })
+      );
+    });
+
+    it("saves the editor's own elements without toChannelElements", () => {
+      vi.useFakeTimers();
+      const { editor: dropEditor } = createDropTestEditor("paragraph");
+
+      renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["text"], Editor: ["existing-heading"] },
+            setItems: vi.fn(),
+            editor: dropEditor as unknown as Editor,
+          }),
+        { wrapper: ({ children }) => <Provider store={createStore()}>{children}</Provider> }
+      );
+
+      act(() => getOnDrop()(createSidebarDropEvent("text")));
+
+      expect(vi.mocked(updateElemental).mock.calls.at(-1)?.[1]).toMatchObject({ elements: [] });
+    });
+    describe("DropRules", () => {
+      /** The editor gets DropRules, and a 5-sized first block, as a channel with a fixed layout has. */
+      const withRules = (
+        editor: ReturnType<typeof createDropTestEditor>["editor"],
+        rules: { fixedFirstBlock?: boolean; sidebarTypes?: string[] | null }
+      ) => {
+        Object.assign(editor, {
+          extensionManager: {
+            extensions: [
+              {
+                name: "dropRules",
+                options: { fixedFirstBlock: false, sidebarTypes: null, ...rules },
+              },
+            ],
+          },
+        });
+        Object.assign(editor.state.doc, { firstChild: { nodeSize: 5 } });
+        return editor;
+      };
+
+      /** The first block as the move path reads it. */
+      const movable = (editor: ReturnType<typeof createDropTestEditor>["editor"]) => {
+        Object.assign(editor.state.doc, {
+          nodeAt: (pos: number) =>
+            pos === 0
+              ? {
+                  type: { name: "heading" },
+                  attrs: { id: "existing-heading" },
+                  nodeSize: 5,
+                  toJSON: () => ({ type: "heading" }),
+                }
+              : null,
+        });
+        return editor;
+      };
+
+      const mountWith = (editor: unknown) =>
+        renderHook(
+          () =>
+            usePragmaticDnd({
+              items: { Sidebar: ["text"], Editor: ["existing-heading"] },
+              setItems: vi.fn(),
+              editor: editor as Editor,
+            }),
+          { wrapper: ({ children }) => <Provider store={createStore()}>{children}</Provider> }
+        );
+
+      /** A sidebar block dropped where it would land at the very top of the document. */
+      const dropAtTop = (dragType = "text") => ({
+        source: { data: { id: dragType, type: "sidebar", dragType } },
+        location: {
+          current: {
+            dropTargets: [{ data: { id: "existing-node", type: "editor", index: -1 } }],
+            input: { clientY: 0 },
+          },
+        },
+      });
+
+      /** The first block (pos 0) dragged onto the block after it. */
+      const moveFirstBlock = {
+        source: { data: { id: "existing-heading", type: "editor", pos: 0 } },
+        location: {
+          current: {
+            dropTargets: [{ data: { id: "next", type: "editor", index: 1, pos: 10 } }],
+            input: { clientY: 100 },
+          },
+        },
+      };
+
+      it("refuses a sidebar block the rules don't take, on any target", () => {
+        const { editor } = createDropTestEditor("paragraph");
+        mountWith(withRules(editor, { sidebarTypes: ["list"] }));
+
+        act(() => getOnDrop()(createSidebarDropEvent("text")));
+
+        expect(editor.commands.insertContentAt).not.toHaveBeenCalled();
+      });
+
+      it("inserts a sidebar block at the top without rules (every other channel)", () => {
+        vi.useFakeTimers();
+        const { editor } = createDropTestEditor("paragraph");
+        mountWith(editor);
+
+        act(() => getOnDrop()(dropAtTop()));
+
+        expect(editor.commands.insertContentAt).toHaveBeenCalledWith(0, expect.anything());
+      });
+
+      it("inserts below a fixed first block a sidebar block that would land above it", () => {
+        vi.useFakeTimers();
+        const { editor } = createDropTestEditor("paragraph");
+        mountWith(withRules(editor, { fixedFirstBlock: true }));
+
+        act(() => getOnDrop()(dropAtTop()));
+
+        expect(editor.commands.insertContentAt).toHaveBeenCalledWith(5, expect.anything());
+      });
+
+      it("moves the first block without rules (every other channel)", () => {
+        const { editor } = createDropTestEditor("paragraph");
+        mountWith(movable(editor));
+
+        act(() => getOnDrop()(moveFirstBlock));
+
+        expect(editor.chain).toHaveBeenCalled();
+      });
+
+      it("never moves a fixed first block", () => {
+        const { editor } = createDropTestEditor("paragraph");
+        mountWith(movable(withRules(editor, { fixedFirstBlock: true })));
+
+        act(() => getOnDrop()(moveFirstBlock));
+
+        expect(editor.chain).not.toHaveBeenCalled();
+      });
     });
   });
 });
