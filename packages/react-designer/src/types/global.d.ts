@@ -3,7 +3,7 @@ import type { ElementalContent } from "./elemental.types";
 
 // Note: "teams" is used in editors object but ChannelType uses "msteams"
 // This is a pre-existing inconsistency in the codebase
-type TestChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams";
+type TestChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams" | "whatsapp";
 
 declare global {
   interface Window {
@@ -15,9 +15,10 @@ declare global {
         inbox: Editor | null;
         slack: Editor | null;
         teams: Editor | null;
+        whatsapp: Editor | null;
       };
       currentEditor: Editor | null;
-      activeChannel: "email" | "sms" | "push" | "inbox" | "slack" | "teams" | null;
+      activeChannel: "email" | "sms" | "push" | "inbox" | "slack" | "teams" | "whatsapp" | null;
       templateEditorContent: ElementalContent | null | undefined;
       /**
        * Programmatically set the template editor content.

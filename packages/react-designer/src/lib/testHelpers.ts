@@ -3,8 +3,8 @@ import type { ElementalContent } from "@/types/elemental.types";
 
 // Note: "teams" is used in editors object but ChannelType uses "msteams"
 // This is a pre-existing inconsistency in the codebase
-type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "teams";
-type TestChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams";
+type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "teams" | "whatsapp";
+type TestChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams" | "whatsapp";
 
 // Type-safe accessor for test object
 declare global {
@@ -17,6 +17,7 @@ declare global {
         inbox: Editor | null;
         slack: Editor | null;
         teams: Editor | null;
+        whatsapp: Editor | null;
       };
       currentEditor: Editor | null;
       activeChannel: ChannelType | null;
@@ -60,6 +61,7 @@ export function initTestHelpers() {
         inbox: null,
         slack: null,
         teams: null,
+        whatsapp: null,
       },
       currentEditor: null,
       activeChannel: null,
@@ -117,6 +119,7 @@ export function clearTestEditors() {
       inbox: null,
       slack: null,
       teams: null,
+      whatsapp: null,
     };
     window.__COURIER_CREATE_TEST__.currentEditor = null;
     window.__COURIER_CREATE_TEST__.activeChannel = null;

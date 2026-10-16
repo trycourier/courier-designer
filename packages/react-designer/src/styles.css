@@ -654,6 +654,156 @@
   }
 }
 
+.courier-whatsapp-editor {
+  /* No narrow cap as on SMS: the bubble is wide enough for a variable's full name */
+  /* Hosts that load tippy's theme (Studio) would draw the formatting menu in a dark box */
+  .tippy-box {
+    @apply !courier-bg-transparent;
+  }
+
+  .tippy-arrow {
+    @apply courier-hidden;
+  }
+
+  /* The handle row has no left padding here, so the drop indicator needs none either */
+  .courier-drag-indicator {
+    @apply courier-ml-0;
+  }
+
+  @apply courier-flex courier-flex-col courier-py-2 courier-rounded-lg courier-bg-white courier-text-[#111B21] courier-shadow-sm dark:courier-bg-[#242626] dark:courier-text-[#E9EDEF];
+
+  .ProseMirror {
+    @apply courier-p-0 courier-gap-0.5 courier-flex courier-flex-col;
+
+    & > .react-renderer {
+      .node-element {
+        & > div {
+          @apply !courier-p-0;
+        }
+
+        /* A quote keeps a gap between its bar and the text, as WhatsApp draws it */
+        &.c--block-quote > div {
+          @apply !courier-pl-3;
+        }
+
+        h2 {
+          @apply courier-text-sm courier-font-semibold;
+        }
+      }
+      .draggable-item {
+        @apply courier-px-4;
+        > div {
+          @apply courier-pl-0;
+        }
+      }
+      &.node-paragraph,
+      &.node-heading {
+        p,
+        h2 {
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
+      }
+    }
+
+    /* The header line is fixed: no handle, no actions. Body blocks below it drag like Slack's. */
+    & > .react-renderer:first-child {
+      .selected-element {
+        .node-element {
+          &::before {
+            @apply courier-hidden;
+          }
+        }
+        .courier-actions-panel {
+          @apply courier-hidden;
+        }
+      }
+      &:hover {
+        .draggable-item {
+          @apply courier-px-4;
+        }
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+
+        .node-element {
+          & > div {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* An image header replaces the title line, which stays in the document but is not shown */
+.courier-whatsapp-editor.courier-whatsapp-editor-image-header
+  .ProseMirror
+  > .react-renderer:first-child {
+  @apply courier-hidden;
+}
+
+/* Inset by a few pixels from the bubble's edge and rounded, as WhatsApp draws a media header */
+.courier-whatsapp-header-image {
+  @apply -courier-mt-1 courier-mb-1 courier-px-1;
+
+  img,
+  .courier-empty-image {
+    @apply courier-rounded-md;
+  }
+
+  .courier-empty-image {
+    @apply courier-h-[140px];
+  }
+}
+
+/* A WhatsApp template cannot vary per recipient, so blocks offer no conditions */
+.courier-whatsapp-sidebar [data-courier-feature="block-conditionals"] {
+  @apply courier-hidden;
+}
+
+/* WhatsApp's chat background colours, without its wallpaper artwork */
+/* Wider than the shared phone so the message gets Meta's previewer width (280px), with room on its right for a block's actions inside the screen */
+.courier-whatsapp-screen {
+  @apply !courier-w-[364px] !courier-bg-[#EFEAE2] dark:!courier-bg-[#161717];
+}
+
+.courier-whatsapp-message {
+  @apply courier-flex courier-flex-col courier-min-w-[280px] courier-ml-3 courier-mr-14 courier-my-6 courier-mt-10;
+
+  &:has(.courier-whatsapp-buttons) .courier-whatsapp-editor {
+    @apply courier-rounded-b-none;
+  }
+}
+
+/* Not overflow-hidden: the selected button's actions panel sits outside the rows */
+.courier-whatsapp-buttons {
+  @apply courier-flex courier-flex-col courier-rounded-b-lg courier-bg-white courier-shadow-sm dark:courier-bg-[#242626];
+
+  .courier-whatsapp-button {
+    @apply courier-relative courier-flex courier-items-center courier-justify-center courier-gap-1.5 courier-py-2 courier-text-sm courier-text-[#00A884] courier-border-t courier-border-[#E9EDEF] dark:courier-border-[#3B3D3D];
+
+    &:last-child {
+      @apply courier-rounded-b-lg;
+    }
+  }
+
+  .courier-whatsapp-button-selected {
+    @apply courier-outline courier-outline-2 -courier-outline-offset-2 courier-outline-accent-foreground;
+  }
+
+  /* Where a dragged Button lands */
+  .courier-whatsapp-button-slot {
+    @apply courier-m-1.5 courier-py-2 courier-text-center courier-text-sm courier-rounded-md courier-border-2 courier-border-dashed courier-border-accent-foreground courier-text-accent-foreground dark:courier-border-accent dark:courier-text-accent;
+  }
+
+  .courier-whatsapp-button-slot-over {
+    @apply courier-bg-accent;
+  }
+}
+
 .courier-push-editor {
   --courier-variable-chip-max-width: 14ch;
 

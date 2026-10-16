@@ -1,4 +1,4 @@
-import { Email, Inbox, MSTeams, Push, Slack, SMS } from "./Channels";
+import { Email, Inbox, MSTeams, Push, Slack, SMS, Whatsapp } from "./Channels";
 export { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 export { useChannels, getChannelDefaults } from "./Channels";
 export { default as EmailEditor } from "./Channels/Email/EmailEditor";
@@ -11,6 +11,7 @@ export {
 export { SideBar as InboxSideBar } from "./Channels/Inbox/SideBar";
 export { MSTeamsSideBar, MSTeamsSideBarItemDetails } from "./Channels/MSTeams/SideBar";
 export { SlackSideBar, SlackSideBarItemDetails } from "./Channels/Slack/SideBar";
+export { WhatsappSideBar } from "./Channels/Whatsapp/WhatsappSideBar";
 
 // Document-level email style controls, so a host that supplies its own `render`
 // (studio's email channel does) gets the same Frame / base-typography fields as
@@ -38,6 +39,7 @@ export {
   type PushEditorProps,
   type SlackEditorProps,
   type SMSEditorProps,
+  type WhatsappEditorProps,
 } from "./Channels";
 
 export const EmailChannel = Email;
@@ -46,6 +48,7 @@ export const PushChannel = Push;
 export const InboxChannel = Inbox;
 export const MSTeamsChannel = MSTeams;
 export const SlackChannel = Slack;
+export const WhatsappChannel = Whatsapp;
 
 export { ChannelRootContainer, EditorSidebar } from "./Layout";
 export {
@@ -58,6 +61,13 @@ export {
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
   emailFontFamilyAtom,
 } from "./store";
-export { InboxEditor, MSTeamsEditor, PushEditor, SlackEditor, SMSEditor } from "./Channels";
+export {
+  InboxEditor,
+  MSTeamsEditor,
+  PushEditor,
+  SlackEditor,
+  SMSEditor,
+  WhatsappEditor,
+} from "./Channels";
 
 export { useDebouncedFlush } from "./hooks/useDebouncedFlush";
