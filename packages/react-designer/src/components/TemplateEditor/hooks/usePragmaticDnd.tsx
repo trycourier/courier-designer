@@ -10,7 +10,13 @@ import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock
 import { defaultListProps } from "@/components/extensions/List/List";
 import { defaultTextBlockProps } from "@/components/extensions/TextBlock";
 import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import {
+  acceptsSidebarBlock,
+  allowedInsertPosition,
+  isFixedFirstBlock,
+} from "@/components/extensions/DropRules";
 import type { TiptapDoc } from "@/types/tiptap.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import { v4 as uuidv4 } from "uuid";
 import type { Editor } from "@tiptap/react";
 import type { Node } from "@tiptap/pm/model";
@@ -56,6 +62,11 @@ interface UsePragmaticDndProps {
     React.SetStateAction<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>
   >;
   editor?: Editor | null;
+  /** For a channel whose stored elements are not the editor's, such as a fixed header or buttons kept outside it. */
+  toChannelElements?: (
+    existing: ElementalContent | null | undefined,
+    editorElements: ElementalNode[]
+  ) => ElementalNode[];
 }
 
 interface DragData {
@@ -86,7 +97,12 @@ interface ColumnDropData {
   isEmpty?: boolean;
 }
 
-export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProps) => {
+export const usePragmaticDnd = ({
+  items,
+  setItems,
+  editor,
+  toChannelElements,
+}: UsePragmaticDndProps) => {
   const [lastPlaceholderIndex] = useState<number | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
@@ -114,12 +130,21 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
     const newContent = updateElemental(templateEditorContent, {
       channel: channel,
-      elements: elementalElements,
+      elements: toChannelElements
+        ? toChannelElements(templateEditorContent, elementalElements)
+        : elementalElements,
     });
 
     setTemplateEditorContent(newContent);
     setPendingAutoSave(newContent);
-  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent, setPendingAutoSave]);
+  }, [
+    activeEditor,
+    channel,
+    templateEditorContent,
+    setTemplateEditorContent,
+    setPendingAutoSave,
+    toChannelElements,
+  ]);
 
   const cleanupPlaceholder = useCallback(() => {
     activeEditor?.commands.removeDragPlaceholder();
@@ -494,6 +519,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
           // Prevent dropping inside lists - adjust position to after the list
           position = adjustPositionIfInsideList(position);
+          // Never above a fixed first block (DropRules), whichever path computed the position
+          position = allowedInsertPosition(activeEditor, position);
 
           const nodeData = createNodeFromDragType(dragType);
 
@@ -591,6 +618,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           }
 
           if (!sourceNode || sourcePos === -1) return;
+          // A fixed first block (DropRules) is never moved
+          if (isFixedFirstBlock(activeEditor, sourcePos)) return;
 
           // Determine Target Position
           let targetPos = targetData.insertPos;
@@ -613,6 +642,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
           // Prevent dropping inside lists - adjust position to after the list
           targetPos = adjustPositionIfInsideList(targetPos);
+          // Never above a fixed first block (DropRules)
+          targetPos = allowedInsertPosition(activeEditor, targetPos);
 
           // Prevent dropping into itself
           if (targetPos > sourcePos && targetPos < sourcePos + sourceNode.nodeSize) {
@@ -755,6 +786,18 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         const dropTarget = dropTargets[0];
 
         if (!dropTarget) {
+          cleanupPlaceholder();
+          setIsDragging(false);
+          setActiveId(null);
+          setActiveDragType(null);
+          return;
+        }
+
+        // A sidebar block the editor's DropRules don't take is refused on every target
+        if (
+          sourceData.type === "sidebar" &&
+          !acceptsSidebarBlock(activeEditor, sourceData.dragType)
+        ) {
           cleanupPlaceholder();
           setIsDragging(false);
           setActiveId(null);

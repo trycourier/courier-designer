@@ -1,4 +1,5 @@
 import { Divider } from "@/components/ui-kit";
+import { acceptsSidebarBlock, getDropRules } from "@/components/extensions/DropRules";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
 import type { Node } from "@tiptap/pm/model";
@@ -131,6 +132,14 @@ export const SortableItemWrapper = ({
     return info.index === info.parent.childCount - 1;
   }, [editor, findNodeInfo]);
 
+  // An editor whose DropRules fix its first block keeps it first, such as a header line
+  const isFixedFirstElement = useCallback(() => {
+    if (!editor || !getDropRules(editor)?.fixedFirstBlock) return false;
+
+    const info = findNodeInfo();
+    return !!info && info.parent === editor.state.doc && info.index === 0;
+  }, [editor, findNodeInfo]);
+
   useEffect(() => {
     const element = elementRef.current;
     const handle = handleRef.current;
@@ -147,6 +156,7 @@ export const SortableItemWrapper = ({
         element,
         // Disable drag handle in Shadow DOM contexts (it doesn't work due to event re-targeting)
         dragHandle: isInShadowDom ? undefined : handle || undefined,
+        canDrag: () => !isFixedFirstElement(),
         getInitialData: () => {
           const info = findNodeInfo();
 
@@ -374,7 +384,11 @@ export const SortableItemWrapper = ({
 
           // Attach closest edge information for proper drop positioning
           // Allow bottom edge only for the last element
-          const edges: Edge[] = isLastElement() ? ["top", "bottom"] : ["top"];
+          const edges: Edge[] = isFixedFirstElement()
+            ? ["bottom"]
+            : isLastElement()
+              ? ["top", "bottom"]
+              : ["top"];
 
           return attachClosestEdge(data, {
             input,
@@ -392,6 +406,11 @@ export const SortableItemWrapper = ({
           const sourceDragType = (source.data as { dragType?: string })?.dragType;
           const isInsideColumnCell = element?.closest('[data-column-cell="true"]') !== null;
           if (sourceDragType === "column" && isInsideColumnCell) {
+            return false;
+          }
+
+          // An editor whose DropRules list sidebar types takes only those from the sidebar
+          if (source.data.type === "sidebar" && !acceptsSidebarBlock(editor, sourceDragType)) {
             return false;
           }
 
@@ -757,7 +776,7 @@ export const SortableItemWrapper = ({
       }
       cleanup();
     };
-  }, [id, isLastElement, editor, isReadOnly, findNodeInfo, disableDropTarget]);
+  }, [id, isLastElement, isFixedFirstElement, editor, isReadOnly, findNodeInfo, disableDropTarget]);
 
   return (
     <SortableItem

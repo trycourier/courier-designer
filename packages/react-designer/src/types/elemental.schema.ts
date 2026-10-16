@@ -144,6 +144,7 @@ const TextNode = z.union([
 const MetaNode: z.ZodType<ElementalMetaNode> = BaseElementalNode.extend({
   type: z.literal("meta"),
   title: z.string().optional(),
+  image: z.string().optional(),
   locales: z.record(z.object({ title: z.string().optional() })).optional(),
 });
 
