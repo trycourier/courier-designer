@@ -46,6 +46,7 @@ export { RightAlignIcon } from "./RightAlignIcon";
 export { RightArrowIcon } from "./RightArrowIcon";
 export { RightToLineIcon } from "./RightToLineIcon";
 export { SMSIcon } from "./SMSIcon";
+export { WhatsappIcon } from "./WhatsappIcon";
 export { SignalIcon } from "./SignalIcon";
 export { SlackIcon } from "./SlackIcon";
 export { StrikethroughIcon } from "./StrikethroughIcon";
