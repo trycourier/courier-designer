@@ -38,7 +38,7 @@ const readChannelFile = (channel: string): string => {
 
 describe("Architecture Consistency Tests", () => {
   describe("Content Derivation Pattern", () => {
-    const fixedChannels = ["SMS", "Push", "Inbox"];
+    const fixedChannels = ["SMS", "Push", "Inbox", "Whatsapp"];
 
     fixedChannels.forEach((channel) => {
       describe(`${channel} Channel`, () => {
@@ -139,7 +139,7 @@ describe("Architecture Consistency Tests", () => {
   });
 
   describe("Consistent State Management", () => {
-    const fixedChannels = ["SMS", "Push", "Inbox"];
+    const fixedChannels = ["SMS", "Push", "Inbox", "Whatsapp"];
 
     fixedChannels.forEach((channel) => {
       it(`${channel} should use templateEditorContentAtom`, () => {
@@ -165,7 +165,7 @@ describe("Architecture Consistency Tests", () => {
   });
 
   describe("EditorProvider Usage Pattern", () => {
-    const fixedChannels = ["SMS", "Push", "Inbox"];
+    const fixedChannels = ["SMS", "Push", "Inbox", "Whatsapp"];
 
     fixedChannels.forEach((channel) => {
       it(`${channel} should pass content to render function`, () => {
@@ -228,7 +228,7 @@ describe("Architecture Consistency Tests", () => {
   });
 
   describe("Documentation Compliance", () => {
-    const fixedChannels = ["SMS", "Push", "Inbox"];
+    const fixedChannels = ["SMS", "Push", "Inbox", "Whatsapp"];
 
     fixedChannels.forEach((channel) => {
       it(`${channel} should have eslint-disable comment for intentional dependency omission`, () => {

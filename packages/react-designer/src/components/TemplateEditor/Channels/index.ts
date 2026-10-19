@@ -5,4 +5,5 @@ export * from "./MSTeams";
 export * from "./Push";
 export * from "./Slack";
 export * from "./SMS";
+export * from "./Whatsapp";
 export * from "./useChannels";
