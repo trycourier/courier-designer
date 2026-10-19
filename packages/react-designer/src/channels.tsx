@@ -8,14 +8,7 @@ import {
   WhatsappIcon,
 } from "./components/ui-kit/Icon";
 
-export type ChannelType =
-  | "email"
-  | "sms"
-  | "push"
-  | "inbox"
-  | "slack"
-  | "msteams"
-  | "whatsapp";
+export type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams" | "whatsapp";
 
 export interface Channel {
   label: string;
