@@ -12,6 +12,8 @@ import {
   emailContentBodyColorAtom,
   EMAIL_DEFAULT_FONT_SIZE,
   EMAIL_DEFAULT_LINE_HEIGHT,
+  newContentScopeAtom,
+  templateEditorContentAtom,
 } from "./store";
 import { EMAIL_EDITOR_TEXT_STYLES } from "@/lib/constants/email-editor-tiptap-styles";
 
@@ -214,5 +216,24 @@ describe("readOnlyAtom", () => {
     store.set(readOnlyAtom, true);
     store.set(readOnlyAtom, false);
     expect(store.get(readOnlyAtom)).toBe(false);
+  });
+});
+
+describe("newContentScopeAtom (C-21456)", () => {
+  const unscoped = { version: "2022-01-01" as const, elements: [] };
+
+  it("stamps the scope onto content written while it is set", () => {
+    const store = createStore();
+    store.set(newContentScopeAtom, "strict");
+    store.set(templateEditorContentAtom, unscoped);
+
+    expect(store.get(templateEditorContentAtom)?.scope).toBe("strict");
+  });
+
+  it("leaves content unscoped when it is null", () => {
+    const store = createStore();
+    store.set(templateEditorContentAtom, unscoped);
+
+    expect(store.get(templateEditorContentAtom)).not.toHaveProperty("scope");
   });
 });

@@ -59,6 +59,10 @@ export const emailLineHeightAtom = atom<number | null>(null);
 export type ContentTransformer = (content: ElementalContent) => ElementalContent;
 export const contentTransformerAtom = atom<ContentTransformer | null>(null);
 
+// Scope stamped onto content the editor creates for a template that loaded with
+// none (no saved content, no `value`). Null leaves the scope as written (C-21456).
+export const newContentScopeAtom = atom<ElementalContent["scope"] | null>(null);
+
 // Base atom for template editor content
 const _baseTemplateEditorContentAtom = atom<ElementalContent | undefined | null>(null);
 
@@ -72,6 +76,11 @@ export const templateEditorContentAtom = atom(
     if (!content) {
       set(_baseTemplateEditorContentAtom, content);
       return;
+    }
+
+    const newContentScope = get(newContentScopeAtom);
+    if (newContentScope && !content.scope) {
+      content = { ...content, scope: newContentScope };
     }
 
     // Apply transformer if registered
