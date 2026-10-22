@@ -39,6 +39,7 @@ import {
   isTemplateTransitioningAtom,
   subjectAtom,
   templateEditorContentAtom,
+  newContentScopeAtom,
   pendingAutoSaveAtom,
   lastSavedContentAtom,
   variableValidationAtom,
@@ -123,6 +124,15 @@ export interface TemplateEditorProps
    * to the displayed content. Does not modify the stored content.
    */
   locale?: string;
+  /**
+   * Variable scope for templates created in the editor. `"strict"` renders
+   * `{{data.x}}` / `{{tenant.x}}` on send the way the preview shows them.
+   * `"default"` keeps the legacy root, where `{{x}}` reads `data.x`, for hosts
+   * whose send payloads depend on it. Templates that already have content keep
+   * the scope they were saved with.
+   * @default "strict"
+   */
+  defaultScope?: "strict" | "default";
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -164,11 +174,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   readOnly: readOnlyProp = false,
   sampleData,
   locale,
+  defaultScope = "strict",
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const { store } = useTemplateStore();
   const setRouting = useSetAtom(routingAtom);
+  const setNewContentScope = useSetAtom(newContentScopeAtom);
   const setVariableValidation = useSetAtom(variableValidationAtom);
   const setAvailableVariables = useSetAtom(availableVariablesAtom);
   const setVariableViewMode = useSetAtom(variableViewModeAtom);
@@ -314,6 +326,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       lastSyncedTemplateDataRef.current = null;
       // Clear all content state
       setTemplateData(null);
+      setNewContentScope(null);
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
       setBrandEditorForm(null);
@@ -333,6 +346,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     channels,
     setIsTemplateTransitioning,
     setTemplateData,
+    setNewContentScope,
     setTemplateEditorContent,
     setBrandEditorContent,
     setBrandEditorForm,
@@ -483,6 +497,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       // Mark that we're updating from value prop to prevent onChange from being called
       isUpdatingFromValueProp.current = true;
       prevValueRef.current = valueString;
+      setNewContentScope(null);
       setTemplateEditorContent(value);
 
       if (!autoSave) {
@@ -504,6 +519,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     autoSave,
     value,
     templateEditorContent,
+    setNewContentScope,
     setTemplateEditorContent,
     setIsTemplateLoading,
     handleAutoSave,
@@ -532,6 +548,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
     // const content = templateData?.data?.tenant?.notification?.data?.content || value;
     const content = value || templateData?.data?.tenant?.notification?.data?.content;
+    setNewContentScope(!content && defaultScope === "strict" ? "strict" : null);
     setTemplateEditorContent(content);
     lastSyncedTemplateDataRef.current = templateData; // Mark this templateData as synced
 
@@ -546,6 +563,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setIsTemplateTransitioning,
     templateId,
     value,
+    defaultScope,
+    setNewContentScope,
   ]);
 
   useEffect(() => {

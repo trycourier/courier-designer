@@ -279,6 +279,14 @@ const { requestId } = await courier.send({
 });
 ```
 
+#### Variable scope
+
+Templates created in the editor are saved with `scope: "strict"`, so variables resolve against named roots: `{{data.name}}` reads `message.data.name`, `{{tenant.name}}` reads the tenant, `{{profile.email}}` reads the recipient profile. A bare `{{name}}` renders blank.
+
+Templates saved before strict became the default (`@trycourier/react-designer` 0.10.x and earlier) have no `scope` and keep rendering the legacy way: `{{name}}` reads `message.data.name`, while `{{data.name}}` and `{{tenant.name}}` render blank. Opening them in the editor does not change that.
+
+If one send path serves both kinds, send `data: { ...vars, data: vars }`, which renders the same in both. To keep creating legacy templates, pass `defaultScope="default"` to `TemplateEditor`.
+
 ### Variables
 
 Variables are placeholders in your template that get replaced with actual data when the email is sent. For example, instead of writing "**Hello customer,**" you can write "**Hello `{{user.firstName}}`,**" which will display the recipient's actual name.
@@ -785,6 +793,7 @@ The Editor component is the core element that provides the template editing inte
 | autoSaveDebounce | number                                 | 2000ms  | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                                                                                                                                                          |
 | brandEditor      | boolean                                | false   | When enabled, shows the brand editor interface alongside the template editor. Allows editing brand settings.                                                                                                                                                           |
 | brandProps       | BrandEditorProps                       |         | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component.                                                                                                                                                                 |
+| defaultScope     | "strict" \| "default"                 | "strict" | Variable scope for templates created in the editor. `"strict"` renders `{{data.x}}` and `{{tenant.x}}` on send the way the preview shows them. `"default"` keeps the legacy root, where `{{x}}` reads `data.x`. Templates that already have content keep the scope they were saved with. See [Variable scope](#variable-scope). |
 | hidePublish      | boolean                                | false   | When true, hides the "Publish Changes" button in the editor interface.                                                                                                                                                                                                 |
 | onChange         | (value: ElementalContent) => void      |         | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure.                                                                                                                                                    |
 | routing          | { method: string; channels: string[] } |         | Configures multi-channel routing and delivery behavior. The `method` property determines delivery strategy: "single" (deliver via first available channel) or "all" (deliver via all configured channels). The `channels` array defines which delivery channels are available in the editor. |

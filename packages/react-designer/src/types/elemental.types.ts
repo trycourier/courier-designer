@@ -29,6 +29,8 @@ export interface BorderConfig {
 
 export interface ElementalContent {
   version: "2022-01-01";
+  // "strict" renders against { profile, data, tenant, ... }; absent = legacy { profile, ...data }.
+  scope?: "strict";
   elements: ElementalNode[];
 }
 
