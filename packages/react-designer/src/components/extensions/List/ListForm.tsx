@@ -6,7 +6,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormWarning,
   Input,
   Switch,
   Tabs,
@@ -25,8 +24,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
-import { resolveDataPath } from "../../utils/resolveDataPath";
-import { emailFormattingEnabledAtom, sampleDataAtom } from "../../TemplateEditor/store";
+import { emailFormattingEnabledAtom } from "../../TemplateEditor/store";
 import { defaultListProps } from "./List";
 import { listSchema } from "./List.types";
 import { ConditionsSection } from "../../ui/Conditions";
@@ -61,10 +59,8 @@ export const ListForm = ({
 
   const initialLoop = (element?.attrs as z.infer<typeof listSchema>)?.loop;
   const [loopEnabled, setLoopEnabled] = useState(!!initialLoop);
-  const sampleData = useAtomValue(sampleDataAtom);
   const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
 
-  const loopValue = form.watch("loop");
   const loopValidationTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const triggerLoopValidation = useCallback(() => {
@@ -80,44 +76,6 @@ export const ListForm = ({
     }
     return () => clearTimeout(loopValidationTimer.current);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [dataPathWarning, setDataPathWarning] = useState<string | null>(null);
-  const warningTimer = useRef<ReturnType<typeof setTimeout>>();
-  const isInitialRender = useRef(true);
-
-  const prevSampleData = useRef(sampleData);
-
-  useEffect(() => {
-    const resolveWarning = () => {
-      if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
-        setDataPathWarning(null);
-        return;
-      }
-      const resolution = resolveDataPath(sampleData, loopValue);
-      if (!resolution.exists) setDataPathWarning("Path not found in sample data");
-      else if (!resolution.isArray) setDataPathWarning("Path resolves to a non-array value");
-      else setDataPathWarning(null);
-    };
-
-    const sampleDataChanged = prevSampleData.current !== sampleData;
-    prevSampleData.current = sampleData;
-
-    clearTimeout(warningTimer.current);
-    if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
-      setDataPathWarning(null);
-      return;
-    }
-
-    if (!isInitialRender.current && !sampleDataChanged) {
-      setDataPathWarning(null);
-    }
-
-    const debounceMs = isInitialRender.current || sampleDataChanged ? 0 : 1000;
-    isInitialRender.current = false;
-
-    warningTimer.current = setTimeout(resolveWarning, debounceMs);
-    return () => clearTimeout(warningTimer.current);
-  }, [sampleData, loopValue]);
 
   const { updateNodeAttributes } = useNodeAttributes({
     editor,
@@ -300,10 +258,6 @@ export const ListForm = ({
                         <p className="courier-text-[0.8rem] courier-font-medium courier-text-[#DC2626]">
                           {String(form.formState.errors.loop.message)}
                         </p>
-                      ) : dataPathWarning ? (
-                        <FormWarning className="courier-flex courier-items-center courier-gap-1">
-                          {dataPathWarning}
-                        </FormWarning>
                       ) : null}
                     </FormItem>
                   )}

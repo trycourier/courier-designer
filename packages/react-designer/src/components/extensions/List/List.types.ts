@@ -9,6 +9,10 @@ import { typographyOverrideSchema } from "../TextBlock/TextBlock.types";
  */
 const LOOP_SEGMENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
+// The send evaluates the loop against these scopes (loop-evaluation.ts); Studio
+// must accept every root the renderer does, not just `data`.
+const LOOP_ROOTS = ["data", "profile", "refs", "$"];
+
 function isLoopPath(path: string): boolean {
   const segments = path.split(".");
   return segments.length > 0 && segments.every((segment) => LOOP_SEGMENT.test(segment));
@@ -27,8 +31,8 @@ export const listSchema = z.object({
     .refine((val) => !val || isLoopPath(val), {
       message: "Invalid path format",
     })
-    .refine((val) => !val || val === "data" || val.startsWith("data."), {
-      message: "Path must start with data.",
+    .refine((val) => !val || LOOP_ROOTS.includes(val.split(".")[0]), {
+      message: "Path must start with data, profile, refs, or $.",
     }),
 });
 
