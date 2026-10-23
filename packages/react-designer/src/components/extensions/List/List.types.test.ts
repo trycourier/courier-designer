@@ -33,11 +33,19 @@ describe("listSchema - loop field validation", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should reject path not starting with data.", () => {
+  it.each(["profile.addresses", "refs.data.items", "$.item", "$.item.children"])(
+    "should accept renderer root %s",
+    (loop) => {
+      const result = listSchema.safeParse({ ...baseValid, loop });
+      expect(result.success).toBe(true);
+    },
+  );
+
+  it("should reject path not starting with a supported root", () => {
     const result = listSchema.safeParse({ ...baseValid, loop: "items" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Path must start with data.");
+      expect(result.error.issues[0].message).toBe("Path must start with data, profile, refs, or $.");
     }
   });
 
