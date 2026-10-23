@@ -1,5 +1,28 @@
 # @trycourier/react-designer
 
+## 0.11.0
+
+### Minor Changes
+
+- 9ee3f18: Add opt-ins for channels with a fixed layout: a `DropRules` editor extension that keeps the first block first and limits which sidebar blocks an editor takes, enforced on every drop and move; a `toChannelElements` option on the drag hook so a drop saves the channel's whole element list; and a `screenClassName` on `IPhoneFrame`, whose status icons now follow the text colour so they stay visible in dark mode. The Elemental meta element also accepts an `image` link. Channels that don't opt in are unchanged.
+- 8eb0f4c: Add a WhatsApp channel editor: a header (text or image, saved as `meta.title` or `meta.image`), a body of text, lists and quotes with bold, italic and strikethrough, and up to two URL buttons, laid out as WhatsApp draws a template message. It appears only when the host names `whatsapp` in `routing.channels`.
+- 4da3554: Templates created in the editor are now saved with `scope: "strict"`, so `{{data.x}}` and `{{tenant.x}}` render on send the way the editor previews them instead of coming out blank. [C-21456]
+
+  **Behaviour change for new templates.** A bare `{{x}}` (which the editor already flags with "use `data.x`") now renders blank in a newly created template, and a payload that wraps variables twice (`data: { data: { … } }`) no longer fills `{{data.x}}`. Templates that already have content keep the scope they were saved with; opening or editing them does not change it.
+
+  If one send path serves both old and new templates, send `data: { ...vars, data: vars }`, which renders the same in both. Hosts that need new templates to keep the legacy behaviour can pass `defaultScope="default"` to `TemplateEditor`.
+
+### Patch Changes
+
+- 2ffc43f: Standalone `<BrandProvider><BrandEditor/>` no longer overwrites a brand with defaults. The editor filled its form before the brand loaded and never refilled it, and the footer editor's own setup update replaced the loaded footer with an empty one, so the first edit auto-saved default colors, an empty header and logo, empty social links and a blank footer over the brand's draft. The form and footer are now filled from the loaded brand, and auto-save starts only after that. Until then the canvas and sidebar show a loader instead of inputs, so nothing can be edited mid-load; a failed load says so instead of spinning, and no longer refetches in a loop. The brand query no longer requests a template when there is none (which errored), and `BrandProvider` now shows load and save errors as toasts. [C-21459]
+- c77fcef: Brand editor: the "Manage Preferences" footer toggle now writes `{$.urls.preferences}` instead of `{{urls.preferences}}`, which brand footers never resolved and shipped as a dead link. The toggle also recognises existing preferences links in either brace form, and turning it on or off replaces a legacy `{{urls.preferences}}` link instead of leaving it behind. Footer variables and link hrefs are now saved in the single-brace `{path}` form brand footers render, and `{path}` loads back as a variable chip. [C-21458]
+- 3fd87d4: Put the `ChannelType` union back on one line so `lint:src`, and with it the package build, passes again. No behaviour change.
+- 7498e1d: The In-app editor keeps the body's translations when it saves; any edit used to drop them while the title and button kept theirs.
+- bc941e7: Adds `Select` to the UI kit: the designer's standard dropdown for picking one value from a short list, drawn like the sidebar's existing font picker. The In-app sidebar now uses it for each button's style, labelled "Button style", in place of the 2×2 tile picker. The four options and the values they save are unchanged.
+- 9168a1a: SMS and Push editors no longer open blank when a text block contains markdown such as `**bold**`; the markers stay as literal text.
+- 675e882: Opening an SMS or Push template no longer auto-saves an empty body. The editor mounted with an empty placeholder while the template loaded, and its setup update queued that empty content as an auto-save, which replaced the draft's SMS or Push text once loading finished. SMS and Push now ignore editor updates until the template has loaded, as Email already did. [C-21461]
+- 0c2dcc7: A `var`/`inline-var` path with an array index, such as `{{var "tokens.expo[0].status"}}`, is now listed as a template variable and resolves in preview; it used to be treated as malformed although the send prints it.
+
 ## 0.10.0
 
 ### Minor Changes
