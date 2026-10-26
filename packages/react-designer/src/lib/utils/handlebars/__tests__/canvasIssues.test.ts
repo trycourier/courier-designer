@@ -22,7 +22,7 @@ const issue = (over: Partial<TemplateIssue> = {}): TemplateIssue => ({
 
 describe("which issues the canvas can show", () => {
   it("keeps a block's own fields", () => {
-    for (const field of ["content", "href", "src", "imgHref", "imgSrc", "text"]) {
+    for (const field of ["content", "href", "src", "imgHref", "imgSrc", "text", "loop", "if"]) {
       expect(hasCanvasHome(issue({ field }), "email"), field).toBe(true);
     }
   });
