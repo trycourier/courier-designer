@@ -8,7 +8,18 @@ import type { TemplateIssue, TemplateIssueSeverity } from "./templateIssues";
  * issue in one has nowhere on the canvas to sit and belongs in the host's own
  * list. So does anything in a locale override, which the canvas never shows.
  */
-const CANVAS_FIELDS = new Set(["content", "href", "src", "imgHref", "imgSrc", "text"]);
+// `loop` and `if` sit on a block the author sees, so a broken one pins to that
+// block rather than only counting in the host's list.
+const CANVAS_FIELDS = new Set([
+  "content",
+  "href",
+  "src",
+  "imgHref",
+  "imgSrc",
+  "text",
+  "loop",
+  "if",
+]);
 
 /**
  * The email canvas has no title of its own — a host puts its own indicator on

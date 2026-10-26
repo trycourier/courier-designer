@@ -31,6 +31,9 @@ export type HandlebarsIssueCode =
   | "range-step"
   | "bad-condition-expression"
   | "bad-loop-expression"
+  // A list `loop` whose root the send's scope never holds, so it ReferenceErrors
+  // every send (`loop-evaluation.ts`): the same check the List sidebar draws red.
+  | "loop-unknown-root"
   | "unscoped-path"
   | "parse-error"
   | "trailing-dot"

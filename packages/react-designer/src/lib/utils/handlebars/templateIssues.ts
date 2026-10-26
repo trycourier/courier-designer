@@ -13,6 +13,7 @@ import type {
 } from "./validateHandlebars";
 import { hasUnbalancedBlock, validateHandlebars } from "./validateHandlebars";
 import { isParseableJs } from "./jsExpression";
+import { isLoopPath, loopRootAllowed } from "./loopPath";
 
 /**
  * Whether an issue stops the send, or merely looks wrong.
@@ -62,6 +63,7 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   // fails every send.
   "bad-condition-expression": "blocking",
   "bad-loop-expression": "blocking",
+  "loop-unknown-root": "blocking",
   // Per-occurrence: blocking only where the renderer throws on the `undefined`
   // a bare path resolves to, which the issue itself carries in `sendSeverity`.
   "unscoped-path": "warning",
@@ -361,6 +363,22 @@ function walkElement(
       ...at,
       field,
       raw: value,
+      occurrence: 0,
+    });
+  }
+
+  // A plain-path loop (not an arbitrary JS expression the backend might accept)
+  // whose root the send's scope never holds always fails — the same rule the
+  // List sidebar draws red, so the gate and the sidebar agree.
+  const loop = record.loop;
+  if (typeof loop === "string" && loop && isLoopPath(loop) && !loopRootAllowed(loop)) {
+    out.push({
+      severity: severityForCode("loop-unknown-root"),
+      code: "loop-unknown-root",
+      message: `This loop reads "${loop.split(".")[0]}", which the send never provides, so every send fails. Start it with data, profile, refs or $.`,
+      ...at,
+      field: "loop",
+      raw: loop,
       occurrence: 0,
     });
   }

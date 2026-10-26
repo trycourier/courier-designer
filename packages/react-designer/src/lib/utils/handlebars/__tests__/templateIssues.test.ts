@@ -340,9 +340,30 @@ describe("an if or loop that will not parse", () => {
         withElement({ type: "text", content: "hi", if: "data.count > 2" }) as never
       )
     ).toEqual([]);
+    for (const loop of ["data.items", "profile.addresses", "refs.data.items", "$.item.children"]) {
+      expect(
+        collectTemplateIssues(withElement({ type: "list", loop, elements: [] }) as never),
+        loop
+      ).toEqual([]);
+    }
+  });
+
+  it("blocks a plain-path loop whose root the send never provides", () => {
+    const [issue] = collectTemplateIssues(
+      withElement({ type: "list", loop: "info.items", elements: [] }) as never
+    );
+    expect(issue).toMatchObject({
+      severity: "blocking",
+      code: "loop-unknown-root",
+      field: "loop",
+      elementIndex: 0,
+    });
+  });
+
+  it("leaves a data-rooted loop expression alone, which the backend may accept", () => {
     expect(
       collectTemplateIssues(
-        withElement({ type: "list", loop: "data.items", elements: [] }) as never
+        withElement({ type: "list", loop: "data.items.slice(0, 3)", elements: [] }) as never
       )
     ).toEqual([]);
   });
