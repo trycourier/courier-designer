@@ -60,19 +60,15 @@ The follow scopes are available for the editor:
 
 - `tenants:read`: allow the user to read all tenant data
 - `tenants:brand:read`: allow the user to read brand data for all tenants
+- `tenants:brand:write`: allow the user to write brand data for all tenants
 - `tenants:notifications:read`: allow the user to read all notification data for all tenants
 - `tenants:notifications:write`: allow the user to write all notification data for all tenants
-- `tenant:${TENANT_ID}:read` : allow the user to read tenant data for a specific tenant
-- `tenant:${TENANT_ID}:notification:read` : allow the user to write notification data for a specific tenant
-- `tenant:${TENANT_ID}:notification:write` : allow the user to write notification data for a specific tenant
-- `tenant:${TENANT_ID}:brand:read` : allow the user to read brand data for a specific tenant
-- `tenant:${TENANT_ID}:brand:write`: allow the user to write brand data for a specific tenant
 
-Here is a curl example with all the scopes needed that the SDK uses. Change the scopes to the scopes you need for your use case.
+The examples below use these workspace-wide scopes. Change the scopes to the ones you need for your use case.
 
 **Example**
 
-This example will generate a JWT that has access to all tenants and tenant notifications
+This example will generate a JWT that has access to all tenants and their notifications (no brand access)
 
 ```bash
 curl --request POST \
@@ -90,7 +86,7 @@ curl --request POST \
 
 **Example**
 
-This example will generate a JWT that only has access to a specific tenant and it's notifications
+This example will generate a JWT that also gives the user access to read and write brand information (needed when the brand editor is enabled)
 
 ```bash
 curl --request POST \
@@ -100,24 +96,7 @@ curl --request POST \
      --header 'Content-Type: application/json' \
      --data \
  '{
-    "scope": "user_id:$YOUR_USER_ID tenant:tenant-123:read tenant:tenant-123:notifications:read tenants:tenant-123:notifications:write",
-    "expires_in": "$YOUR_NUMBER days"
-  }'
-```
-
-**Example**
-
-This example will generate a JWT that gives a user access to change brand information for a specific tenant
-
-```bash
-curl --request POST \
-     --url https://api.courier.com/auth/issue-token \
-     --header 'Accept: application/json' \
-     --header 'Authorization: Bearer $YOUR_AUTH_KEY' \
-     --header 'Content-Type: application/json' \
-     --data \
- '{
-    "scope": "user_id:$YOUR_USER_ID tenant:tenant-123:read tenant:tenant-123:brand:read tenant:tenant-123:brand:write",
+    "scope": "user_id:$YOUR_USER_ID tenants:read tenants:notifications:read tenants:notifications:write tenants:brand:read tenants:brand:write",
     "expires_in": "$YOUR_NUMBER days"
   }'
 ```
@@ -830,6 +809,8 @@ function App() {
 - `"sms"` - SMS text messaging
 - `"push"` - Push notifications
 - `"inbox"` - In-app messaging
+- `"slack"` - Slack messaging
+- `"msteams"` - Microsoft Teams messaging
 
 **Delivery Methods:**
 - `"single"` - Delivers via the first available channel (fallback strategy)
@@ -948,9 +929,20 @@ The Courier Editor is currently only compatible with React applications. This me
 
 Minimal supported React version is 18.2.0.
 
-**Email channel support only**
+**Channel support**
 
-Currently, the editor only supports creating and editing email templates. Support for additional channels like SMS, push notifications, and direct messages is currently under development and will be added in the next month or so.
+The editor ships layouts for the following channels. Select which ones appear with the `routing.channels` prop (see [Multi-Channel Routing](#multi-channel-routing)).
+
+| Channel  | Editor support |
+| -------- | -------------- |
+| Email    | ✅             |
+| SMS      | ✅             |
+| Push     | ✅             |
+| Inbox    | ✅             |
+| Slack    | ✅             |
+| MS Teams | ✅             |
+
+Default routing is email-only (`{ method: "single", channels: ["email"] }`); pass `routing` to enable the others.
 
 # Development
 
