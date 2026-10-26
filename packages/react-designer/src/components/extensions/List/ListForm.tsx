@@ -209,7 +209,9 @@ export const ListForm = ({
                   name="loop"
                   render={({ field }) => (
                     <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
-                      <FormLabel className="!courier-m-0">Loop on</FormLabel>
+                      <FormLabel className="!courier-m-0 !courier-text-foreground">
+                        Loop on
+                      </FormLabel>
                       <FormControl>
                         <Switch
                           checked={loopEnabled}
@@ -236,7 +238,7 @@ export const ListForm = ({
                   name="loop"
                   render={({ field }) => (
                     <FormItem className="courier-mb-4">
-                      <FormLabel>Data path</FormLabel>
+                      <FormLabel className="!courier-text-foreground">Data path</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="data.items"
