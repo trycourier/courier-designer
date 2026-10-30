@@ -416,10 +416,13 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const filteredVisibleBlocks = useMemo(() => {
       // MSTeams supports a subset of block types
       const supportedBlocks: BlockElementType[] = ["text", "divider", "list"];
-      return visibleBlocks.filter((block) => {
+      const blocks = visibleBlocks.filter((block) => {
         const blockType = isPresetReference(block) ? block.type : block;
         return supportedBlocks.includes(blockType as BlockElementType);
       });
+
+      // Appended like Slack's: DEFAULT_VISIBLE_BLOCKS is consumed unfiltered by Email.
+      return [...blocks, "jsonnet" as const];
     }, [visibleBlocks]);
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(

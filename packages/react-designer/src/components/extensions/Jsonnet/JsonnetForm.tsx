@@ -10,7 +10,7 @@ import type { ElementalIfCondition } from "@/types/conditions.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,7 +23,8 @@ import { FormHeader } from "../../ui/FormHeader";
 import { defaultJsonnetProps } from "./Jsonnet";
 import { jsonnetSchema } from "./Jsonnet.types";
 import { MonacoJsonnetEditor } from "./MonacoJsonnetEditor";
-import { jsonnetTemplates } from "./templates";
+import { channelAtom } from "@/store";
+import { jsonnetTemplates, msteamsJsonnetTemplates } from "./templates";
 
 const DOCS_URL =
   "https://www.courier.com/docs/courier-designer/content-blocks/jsonnet-blocks/#working-with-jsonnet-blocks";
@@ -50,6 +51,8 @@ export const JsonnetForm = ({ element, editor }: JsonnetFormProps) => {
   });
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
+  const starters =
+    useAtomValue(channelAtom) === "msteams" ? msteamsJsonnetTemplates : jsonnetTemplates;
   // Monaco reads its content from `defaultValue`, so picking a starter has to
   // remount it rather than nudge the form value.
   const [editorGeneration, setEditorGeneration] = useState(0);
@@ -134,7 +137,7 @@ export const JsonnetForm = ({ element, editor }: JsonnetFormProps) => {
                 className="courier-w-[var(--radix-dropdown-menu-trigger-width)]"
                 align="start"
               >
-                {jsonnetTemplates.map(({ label, template }) => (
+                {starters.map(({ label, template }) => (
                   <DropdownMenuItem key={label} onSelect={() => handleStarterSelect(template)}>
                     {label}
                   </DropdownMenuItem>

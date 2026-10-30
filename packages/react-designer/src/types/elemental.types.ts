@@ -384,7 +384,7 @@ export interface ElementalHtmlNode extends IsElementalNode {
 
 /**
  * Raw Jsonnet that the backend evaluates into the provider's own payload shape
- * (Slack Block Kit). Never rendered by the designer — see JsonnetComponent.
+ * (Slack Block Kit, MS Teams Adaptive Card). Never rendered by the designer — see JsonnetComponent.
  */
 export interface ElementalJsonnetNode extends IsElementalNode {
   type: "jsonnet";

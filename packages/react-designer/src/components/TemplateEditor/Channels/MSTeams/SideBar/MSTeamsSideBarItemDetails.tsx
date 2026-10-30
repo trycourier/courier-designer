@@ -3,7 +3,10 @@ import type { Editor } from "@tiptap/react";
 import { ButtonForm } from "@/components/extensions/Button";
 import { LinkForm } from "@/components/extensions/Link";
 import { ListForm } from "@/components/extensions/List";
+import { JsonnetForm } from "@/components/extensions/Jsonnet";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { isSidebarExpandedAtom } from "@/components/TemplateEditor/store";
+import { cn } from "@/lib";
 import { useAtomValue } from "jotai";
 
 export interface MSTeamsSideBarItemDetailsProps {
@@ -18,6 +21,7 @@ export const MSTeamsSideBarItemDetails = ({
   defaultElement,
 }: MSTeamsSideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
+  const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
 
   if (!element) {
     return defaultElement;
@@ -35,6 +39,20 @@ export const MSTeamsSideBarItemDetails = ({
     return (
       <div className="courier-flex courier-flex-col courier-gap-4">
         <ButtonForm element={element} editor={editor} key={element.attrs.id} />
+      </div>
+    );
+  }
+
+  if (element.type.name === "jsonnet") {
+    return (
+      // h-full while expanded, or the Monaco editor collapses (see Slack's).
+      <div
+        className={cn(
+          "courier-flex courier-flex-col courier-gap-4",
+          isSidebarExpanded && "courier-h-full"
+        )}
+      >
+        <JsonnetForm element={element} editor={editor} key={element.attrs.id} />
       </div>
     );
   }
