@@ -1,5 +1,21 @@
 # @trycourier/react-designer
 
+## 0.12.0
+
+### Minor Changes
+
+- d2b1124: Add the Jsonnet block to the MS Teams channel, matching Slack's, and offer it on both channels unconditionally.
+
+  `TemplateProvider`'s `slackJsonnetEnabled` prop is removed: the Jsonnet block is now always in the Slack and MS Teams sidebars. Hosts that passed it should drop the prop. On Teams the starter dropdown and the inserted default are Adaptive Card templates, since the backend only sends a top-level `type: "AdaptiveCard"` object and the Slack Block Kit starters would render nothing there.
+
+  Also raises the `handlebars` floor to `^4.7.10`, matching the security patch hosts already apply.
+
+### Patch Changes
+
+- bacb128: The List loop's Data path no longer flags valid `profile.*`, `refs.*` and `$.item` sources as "Path must start with data." — Studio now accepts every root the send renderer evaluates. The sample-data "Path not found" / "non-array value" warning is also dropped from the sidebar; that data-dependent check belongs in Preview & Test, not the design surface.
+
+  A blocking loop error now pins to its block on the canvas instead of only counting in the host's "errors blocking publish" list: `loop` and `if` issues gain a canvas home, and a plain-path loop whose root the send never provides (e.g. `info.items`) is now a blocking template issue, matching the sidebar's red state.
+
 ## 0.11.0
 
 ### Minor Changes
