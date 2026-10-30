@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Jsonnet, defaultJsonnetProps } from "./Jsonnet";
 import { JsonnetComponent } from "./JsonnetComponent";
-import { jsonnetTemplates, defaultJsonnetTemplate } from "./templates";
+import { jsonnetTemplates, defaultJsonnetTemplate, msteamsJsonnetTemplates } from "./templates";
 import { registerJsonnetLanguage, JSONNET_LANGUAGE_ID } from "./jsonnetLanguage";
 
 vi.mock("../../utils", () => ({
@@ -34,6 +34,14 @@ describe("Jsonnet extension", () => {
       "Text With Image",
       "Dropdown (Using Loops)",
     ]);
+  });
+
+  // The backend sends only a top-level `type: "AdaptiveCard"` object on Teams.
+  it("offers MS Teams only Adaptive Card starters", () => {
+    expect(msteamsJsonnetTemplates.length).toBeGreaterThan(0);
+    for (const { template } of msteamsJsonnetTemplates) {
+      expect(template).toMatch(/^\{\s*"type": "AdaptiveCard",/m);
+    }
   });
 });
 

@@ -11,6 +11,8 @@ import {
   templateEditorAtom,
 } from "../TemplateEditor/store";
 import { selectedNodeAtom } from "../ui/TextMenu/store";
+import { channelAtom } from "@/store";
+import { msteamsJsonnetTemplates } from "../extensions/Jsonnet/templates";
 
 // Mock createOrDuplicateNode
 vi.mock("../utils/createOrDuplicateNode", () => ({
@@ -640,6 +642,26 @@ describe("useBlockConfig", () => {
           color: "transparent",
           padding: 24,
         }),
+        expect.any(Function)
+      );
+    });
+
+    it("starts a Jsonnet block on MS Teams with the Adaptive Card starter", () => {
+      const mockEditor = { state: { doc: { content: { size: 0 } } } };
+      store.set(templateEditorAtom, mockEditor as unknown as null);
+      store.set(channelAtom, "msteams");
+
+      const { result } = renderHook(() => useBlockConfig(), { wrapper });
+
+      act(() => {
+        result.current.insertBlock("jsonnet");
+      });
+
+      expect(mockCreateOrDuplicateNode).toHaveBeenCalledWith(
+        mockEditor,
+        "jsonnet",
+        0,
+        { template: msteamsJsonnetTemplates[0].template },
         expect.any(Function)
       );
     });

@@ -13,6 +13,11 @@ import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { Editor } from "@tiptap/react";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { updateElemental } from "@/lib/utils";
+import { channelAtom } from "@/store";
+import {
+  defaultJsonnetTemplate,
+  msteamsJsonnetTemplates,
+} from "@/components/extensions/Jsonnet/templates";
 
 // Mock pragmatic-drag-and-drop
 vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
@@ -897,6 +902,38 @@ describe("usePragmaticDnd", () => {
 
     afterEach(() => {
       vi.useRealTimers();
+    });
+
+    // The backend sends only a top-level AdaptiveCard on Teams, so the Slack
+    // Block Kit default would deliver nothing there.
+    it.each([
+      ["msteams", msteamsJsonnetTemplates[0].template],
+      ["slack", defaultJsonnetTemplate],
+    ] as const)("inserts the %s Jsonnet starter on a sidebar drop", (channel, template) => {
+      const { editor: dropEditor } = createDropTestEditor("jsonnet");
+      const dropStore = createStore();
+      dropStore.set(channelAtom, channel);
+
+      renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["jsonnet"], Editor: ["existing-heading"] },
+            setItems: vi.fn(),
+            editor: dropEditor as unknown as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider>,
+        }
+      );
+
+      act(() => {
+        getOnDrop()(createSidebarDropEvent("jsonnet"));
+      });
+
+      expect(dropEditor.commands.insertContentAt).toHaveBeenCalledWith(
+        5,
+        expect.objectContaining({ type: "jsonnet", attrs: expect.objectContaining({ template }) })
+      );
     });
 
     it("should place caret inside paragraph node after sidebar drop", () => {

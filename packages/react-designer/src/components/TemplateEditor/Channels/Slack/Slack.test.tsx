@@ -66,7 +66,6 @@ let mockSelectedNode: any = null;
 
 // Constant reference for visible blocks to prevent infinite re-renders
 const mockVisibleBlocks = ["text", "divider", "button"];
-let mockSlackJsonnetEnabled = false;
 
 // Mock the store atoms directly
 vi.mock("@/components/TemplateEditor/store", () => ({
@@ -80,7 +79,6 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
   visibleBlocksAtom: "visibleBlocksAtom",
-  slackJsonnetEnabledAtom: "slackJsonnetEnabledAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   linkTrackingEnabledAtom: "linkTrackingEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
@@ -133,9 +131,6 @@ vi.mock("jotai", () => ({
     }
     if (atom === "visibleBlocksAtom") {
       return mockVisibleBlocks;
-    }
-    if (atom === "slackJsonnetEnabledAtom") {
-      return mockSlackJsonnetEnabled;
     }
     return null;
   }),
@@ -395,7 +390,7 @@ describe("Slack Component", () => {
           editable: true,
           autofocus: true,
           items: expect.objectContaining({
-            Sidebar: ["text", "divider", "button"],
+            Sidebar: ["text", "divider", "button", "jsonnet"],
           }),
         })
       );
@@ -557,7 +552,7 @@ describe("Slack Component", () => {
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
           items: expect.objectContaining({
-            Sidebar: ["text", "divider", "button"],
+            Sidebar: ["text", "divider", "button", "jsonnet"],
             Editor: expect.any(Array),
           }),
         })
@@ -567,39 +562,6 @@ describe("Slack Component", () => {
     // Removed: This test was checking implementation details (editor.on calls)
     // rather than actual behavior. The DnD sync functionality is tested
     // through other tests that verify the items state updates correctly.
-  });
-
-  describe("Jsonnet block gating", () => {
-    afterEach(() => {
-      mockSlackJsonnetEnabled = false;
-    });
-
-    it("omits the Jsonnet block from the sidebar when the host has not enabled it", () => {
-      const mockRender = vi.fn(() => <div>Slack Editor</div>);
-      render(<Slack {...defaultProps} render={mockRender} />);
-
-      expect(mockRender).toHaveBeenCalledWith(
-        expect.objectContaining({
-          items: expect.objectContaining({
-            Sidebar: ["text", "divider", "button"],
-          }),
-        })
-      );
-    });
-
-    it("appends the Jsonnet block when the host has enabled it", () => {
-      mockSlackJsonnetEnabled = true;
-      const mockRender = vi.fn(() => <div>Slack Editor</div>);
-      render(<Slack {...defaultProps} render={mockRender} />);
-
-      expect(mockRender).toHaveBeenCalledWith(
-        expect.objectContaining({
-          items: expect.objectContaining({
-            Sidebar: ["text", "divider", "button", "jsonnet"],
-          }),
-        })
-      );
-    });
   });
 
   describe("Editor Integration", () => {

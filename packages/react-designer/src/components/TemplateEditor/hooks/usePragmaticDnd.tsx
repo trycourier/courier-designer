@@ -5,6 +5,7 @@ import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { defaultColumnProps } from "@/components/extensions/Column/Column";
 import { defaultHTMLProps } from "@/components/extensions/HTML/HTML";
 import { defaultJsonnetProps } from "@/components/extensions/Jsonnet/Jsonnet";
+import { msteamsJsonnetTemplates } from "@/components/extensions/Jsonnet/templates";
 import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
 import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
 import { defaultListProps } from "@/components/extensions/List/List";
@@ -223,7 +224,10 @@ export const usePragmaticDnd = ({
           attrs = defaultHTMLProps as unknown as Record<string, unknown>;
           break;
         case "jsonnet":
-          attrs = defaultJsonnetProps as unknown as Record<string, unknown>;
+          attrs =
+            channel === "msteams"
+              ? { template: msteamsJsonnetTemplates[0].template }
+              : (defaultJsonnetProps as unknown as Record<string, unknown>);
           break;
         case "column":
           attrs = defaultColumnProps as unknown as Record<string, unknown>;
@@ -296,7 +300,7 @@ export const usePragmaticDnd = ({
 
       return result;
     },
-    [blockDefaults, blockPresets]
+    [blockDefaults, blockPresets, channel]
   );
 
   const handleColumnDrop = useCallback(

@@ -101,7 +101,7 @@
     "clsx": "^2.0.0",
     "date-fns": "2.14.0",
     "date-fns-tz": "1.0.10",
-    "handlebars": "^4.7.9",
+    "handlebars": "^4.7.10",
     "jotai": "^2.11.1",
     "lucide-react": "^0.473.0",
     "monaco-editor": ">=0.40.0 <1.0.0",

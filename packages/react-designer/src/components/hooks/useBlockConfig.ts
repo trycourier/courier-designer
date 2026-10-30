@@ -15,6 +15,8 @@ import {
 import { createOrDuplicateNode } from "../utils/createOrDuplicateNode";
 import { selectedNodeAtom } from "../ui/TextMenu/store";
 import { defaultSpacerProps } from "../extensions/Divider/Divider";
+import { msteamsJsonnetTemplates } from "../extensions/Jsonnet/templates";
+import { channelAtom } from "@/store";
 
 export interface UseBlockConfigResult {
   // === Visibility & Order ===
@@ -227,6 +229,8 @@ export const useBlockConfig = (): UseBlockConfigResult => {
 
   // === Actions ===
 
+  const channel = useAtomValue(channelAtom);
+
   const insertBlock = useCallback(
     (type: BlockElementType, presetKey?: string) => {
       if (!editor) {
@@ -241,6 +245,11 @@ export const useBlockConfig = (): UseBlockConfigResult => {
       // This ensures the correct variant and styling when using the "divider" node type
       if (type === "spacer") {
         attributes = { ...defaultSpacerProps };
+      }
+
+      // Same per-channel starter as a sidebar drop (see usePragmaticDnd)
+      if (type === "jsonnet" && channel === "msteams") {
+        attributes = { template: msteamsJsonnetTemplates[0].template };
       }
 
       // Apply user-configured type defaults (may override built-in defaults)
@@ -283,7 +292,7 @@ export const useBlockConfig = (): UseBlockConfigResult => {
       // Create and insert the node
       createOrDuplicateNode(editor, nodeType, insertPos, attributes, setSelectedNode);
     },
-    [editor, blockDefaults, presets, setSelectedNode]
+    [editor, blockDefaults, presets, setSelectedNode, channel]
   );
 
   return {
