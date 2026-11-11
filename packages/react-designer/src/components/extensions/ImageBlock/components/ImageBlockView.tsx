@@ -22,6 +22,10 @@ export const ImageBlockComponent: React.FC<
     selected?: boolean;
     draggable?: boolean;
     onFileSelect?: (file: File) => void;
+    /** The types a drop or the file picker takes; defaults to PNG, JPEG, GIF and WebP. */
+    allowedTypes?: string[];
+    /** A drop held files but none of an allowed type. */
+    onFileRejected?: () => void;
     width: number;
   }
 > = ({
@@ -33,6 +37,8 @@ export const ImageBlockComponent: React.FC<
   isUploading,
   width,
   onFileSelect,
+  allowedTypes = allowedImageTypes,
+  onFileRejected,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -48,7 +54,10 @@ export const ImageBlockComponent: React.FC<
     }
   }, [sourcePath]);
 
-  const isAllowedImageType = useCallback((type: string) => allowedImageTypes.includes(type), []);
+  const isAllowedImageType = useCallback(
+    (type: string) => allowedTypes.includes(type),
+    [allowedTypes]
+  );
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -101,9 +110,11 @@ export const ImageBlockComponent: React.FC<
       const imageFile = files.find((file) => isAllowedImageType(file.type));
       if (imageFile && onFileSelect) {
         onFileSelect(imageFile);
+      } else if (!imageFile && files.length) {
+        onFileRejected?.();
       }
     },
-    [onFileSelect, isAllowedImageType]
+    [onFileSelect, onFileRejected, isAllowedImageType]
   );
 
   const handleFileSelect = useCallback(
@@ -155,7 +166,7 @@ export const ImageBlockComponent: React.FC<
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png, image/jpeg, image/gif, image/webp"
+          accept={allowedTypes.join(", ")}
           className="courier-hidden"
           onChange={handleFileSelect}
         />

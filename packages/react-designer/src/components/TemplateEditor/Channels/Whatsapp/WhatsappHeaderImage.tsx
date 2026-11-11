@@ -6,6 +6,11 @@ import { useAtom, useSetAtom } from "jotai";
 import { useState } from "react";
 import { setWhatsappHeader } from "./whatsappContent";
 
+// Meta takes JPEG or PNG only; publish refuses other links too.
+const HEADER_IMAGE_TYPES = ["image/jpeg", "image/png"];
+// A new object per refusal: the toast fires when the error changes, and the same object again is no change.
+const headerImageTypeError = () => ({ message: "WhatsApp header images must be JPEG or PNG." });
+
 export interface WhatsappHeaderImageProps {
   src: string;
   editable: boolean;
@@ -21,6 +26,12 @@ export const WhatsappHeaderImage = ({ src, editable }: WhatsappHeaderImageProps)
 
   const onFileSelect = async (file: File) => {
     if (!editable) return;
+
+    // The file picker's "All files" option skips `accept`.
+    if (!HEADER_IMAGE_TYPES.includes(file.type)) {
+      setTemplateError(headerImageTypeError());
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -46,6 +57,8 @@ export const WhatsappHeaderImage = ({ src, editable }: WhatsappHeaderImageProps)
         imageNaturalWidth={0}
         isUploading={isUploading}
         onFileSelect={editable ? onFileSelect : undefined}
+        allowedTypes={HEADER_IMAGE_TYPES}
+        onFileRejected={editable ? () => setTemplateError(headerImageTypeError()) : undefined}
       />
     </div>
   );
