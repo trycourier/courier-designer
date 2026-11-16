@@ -768,6 +768,12 @@
 /* Wider than the shared phone so the message gets Meta's previewer width (280px), with room on its right for a block's actions inside the screen */
 .courier-whatsapp-screen {
   @apply !courier-w-[364px] !courier-bg-[#EFEAE2] dark:!courier-bg-[#161717];
+
+  /* The message fills the screen's width, so a vertical scrollbar would push it into a sideways scroll */
+  /* The phone's scroll area is its last child */
+  & > div:last-child {
+    overflow-x: hidden;
+  }
 }
 
 .courier-whatsapp-message {
