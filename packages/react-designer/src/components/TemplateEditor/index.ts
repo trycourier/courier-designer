@@ -68,6 +68,8 @@ export {
   SlackEditor,
   SMSEditor,
   WhatsappEditor,
+  WhatsappPreview,
+  type WhatsappPreviewProps,
 } from "./Channels";
 
 export { useDebouncedFlush } from "./hooks/useDebouncedFlush";
