@@ -44,7 +44,11 @@ describe("with DropRules", () => {
   it("defaults to no restriction", () => {
     const e = create({});
 
-    expect(getDropRules(e)).toEqual({ fixedFirstBlock: false, sidebarTypes: null });
+    expect(getDropRules(e)).toEqual({
+      fixedFirstBlock: false,
+      sidebarTypes: null,
+      trailingTypes: null,
+    });
     expect(acceptsSidebarBlock(e, "image")).toBe(true);
     expect(allowedInsertPosition(e, 0)).toBe(0);
   });

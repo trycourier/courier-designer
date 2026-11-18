@@ -8,7 +8,8 @@ import { MSTeamsEditorContent, defaultMSTeamsContent } from "./MSTeams";
 import { MSTeamsFrame } from "./MSTeamsFrame";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo, useState } from "react";
+import { DropRules, type DropRulesOptions } from "@/components/extensions/DropRules";
 import { type VariableViewMode } from "../../store";
 import { VariableViewModeSync } from "../../VariableViewModeSync";
 import { setVariableViewMode } from "@/components/extensions/Variable";
@@ -33,6 +34,14 @@ export const MSTeamsEditor = ({
 }: MSTeamsEditorProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const isInitialMountRef = useRef(true);
+  // Set while a button is dragged over the message outside the button row: it will end the row.
+  const [trailingDrop, setTrailingDrop] = useState<string | null>(null);
+  const trailingTypes = useMemo(
+    () =>
+      (extensions.find((e) => e.name === DropRules.name)?.options as DropRulesOptions | undefined)
+        ?.trailingTypes ?? null,
+    [extensions]
+  );
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const setPendingLink = useSetAtom(setPendingLinkAtom);
 
@@ -129,14 +138,32 @@ export const MSTeamsEditor = ({
     const element = editorContainerRef.current;
     if (!element || readOnly) return;
 
+    const updateTrailingDrop = ({
+      source,
+      location,
+    }: {
+      source: { data: Record<string, unknown> };
+      location: { current: { dropTargets: { element: Element }[] } };
+    }) => {
+      const dragType = (source.data as { dragType?: string }).dragType;
+      const isOwnTarget = location.current.dropTargets[0]?.element === element;
+      setTrailingDrop(
+        isOwnTarget && dragType && trailingTypes?.includes(dragType) ? dragType : null
+      );
+    };
+
     return dropTargetForElements({
       element,
       getData: () => ({
         type: "editor",
         id: "editor-drop-zone",
       }),
+      onDragEnter: updateTrailingDrop,
+      onDrag: updateTrailingDrop,
+      onDragLeave: () => setTrailingDrop(null),
+      onDrop: () => setTrailingDrop(null),
     });
-  }, [readOnly]);
+  }, [readOnly, trailingTypes]);
 
   if (!content) {
     return null;
@@ -144,7 +171,7 @@ export const MSTeamsEditor = ({
 
   return (
     <MSTeamsFrame>
-      <div ref={editorContainerRef}>
+      <div ref={editorContainerRef} data-trailing-drop={trailingDrop ?? undefined}>
         <EditorProvider
           content={content}
           extensions={extensions}

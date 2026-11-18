@@ -14,6 +14,7 @@ import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import {
   acceptsSidebarBlock,
   allowedInsertPosition,
+  isTrailingType,
   isFixedFirstBlock,
 } from "@/components/extensions/DropRules";
 import type { TiptapDoc } from "@/types/tiptap.types";
@@ -835,12 +836,22 @@ export const usePragmaticDnd = ({
         if (targetData.pos !== undefined && closestEdge && activeEditor) {
           const targetNode = activeEditor.state.doc.nodeAt(targetData.pos);
           if (targetNode) {
-            if (closestEdge === "top") {
+            if (closestEdge === "top" || closestEdge === "left") {
               targetData.insertPos = targetData.pos;
-            } else if (closestEdge === "bottom") {
+            } else if (closestEdge === "bottom" || closestEdge === "right") {
               targetData.insertPos = targetData.pos + targetNode.nodeSize;
             }
           }
+        }
+
+        // A trailing-row block (Teams buttons) dropped anywhere else ends the row.
+        if (
+          targetData.insertPos === undefined &&
+          targetData.id === "editor-drop-zone" &&
+          activeEditor &&
+          isTrailingType(activeEditor, sourceData.dragType)
+        ) {
+          targetData = { ...targetData, insertPos: activeEditor.state.doc.content.size };
         }
 
         // Check if we are dropping into a nested context (inside a column cell)

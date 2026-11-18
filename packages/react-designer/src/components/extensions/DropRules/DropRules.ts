@@ -11,13 +11,18 @@ export interface DropRulesOptions {
   fixedFirstBlock: boolean;
   /** The sidebar blocks this editor takes, by drag type; `null` takes all. */
   sidebarTypes: string[] | null;
+  /**
+   * Block types the channel always draws in one row after every other block (MS Teams
+   * buttons). They drop only beside each other, or at the end of that row.
+   */
+  trailingTypes: string[] | null;
 }
 
 export const DropRules = Extension.create<DropRulesOptions>({
   name: "dropRules",
 
   addOptions() {
-    return { fixedFirstBlock: false, sidebarTypes: null };
+    return { fixedFirstBlock: false, sidebarTypes: null, trailingTypes: null };
   },
 });
 
@@ -45,3 +50,7 @@ export const allowedInsertPosition = (
 /** Whether the block at `pos` is a fixed first block, which is never moved. */
 export const isFixedFirstBlock = (editor: EditorLike, pos: number): boolean =>
   pos === 0 && !!getDropRules(editor)?.fixedFirstBlock;
+
+/** Whether blocks of this type sit in the editor's trailing row (see `trailingTypes`). */
+export const isTrailingType = (editor: EditorLike, type: unknown): boolean =>
+  !!getDropRules(editor)?.trailingTypes?.includes(String(type));
