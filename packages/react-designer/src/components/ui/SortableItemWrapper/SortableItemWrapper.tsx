@@ -1,5 +1,9 @@
 import { Divider } from "@/components/ui-kit";
-import { acceptsSidebarBlock, getDropRules } from "@/components/extensions/DropRules";
+import {
+  acceptsSidebarBlock,
+  getDropRules,
+  isTrailingType,
+} from "@/components/extensions/DropRules";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
 import type { Node } from "@tiptap/pm/model";
@@ -151,6 +155,23 @@ export const SortableItemWrapper = ({
     // due to pragmatic-drag-and-drop's internal handle validation
     const isInShadowDom = element.getRootNode() instanceof ShadowRoot;
 
+    // A trailing-row drag (Teams buttons) shows its indicator beside this block, or not at
+    // all; the top/bottom stability rules below are for vertical drops only.
+    const applyTrailingEdge = (
+      selfData: Record<string | symbol, unknown>,
+      sourceData: Record<string | symbol, unknown>
+    ): boolean => {
+      const sourceDragType = (sourceData as { dragType?: string }).dragType;
+      if (!isTrailingType(editor, sourceDragType)) return false;
+      const edge = sourceData.id === id ? null : extractClosestEdge(selfData);
+      setDragType(sourceDragType ?? null);
+      if (edge !== lastEdgeRef.current) {
+        lastEdgeRef.current = edge;
+        setClosestEdge(edge);
+      }
+      return true;
+    };
+
     const cleanup = combine(
       draggable({
         element,
@@ -267,7 +288,7 @@ export const SortableItemWrapper = ({
       }),
       dropTargetForElements({
         element,
-        getData: ({ input, element: targetElement }) => {
+        getData: ({ input, element: targetElement, source }) => {
           const info = findNodeInfo();
           const isRoot = info?.parent === editor.state.doc;
           const parentIsColumnCell = info?.parent?.type.name === "columnCell";
@@ -351,6 +372,18 @@ export const SortableItemWrapper = ({
             // generic edge logic below.
           }
 
+          // A trailing-row block (Teams buttons) dropped on another one lands beside it.
+          if (
+            isTrailingType(editor, (source?.data as { dragType?: string } | undefined)?.dragType) &&
+            isTrailingType(editor, data.nodeType)
+          ) {
+            return attachClosestEdge(data, {
+              input,
+              element: targetElement,
+              allowedEdges: ["left", "right"],
+            });
+          }
+
           // Check if this element is INSIDE a column cell
           // If so, we want to enable edge detection relative to THIS element for local reordering
           // But we need to make sure it doesn't conflict with main editor reordering
@@ -411,6 +444,15 @@ export const SortableItemWrapper = ({
 
           // An editor whose DropRules list sidebar types takes only those from the sidebar
           if (source.data.type === "sidebar" && !acceptsSidebarBlock(editor, sourceDragType)) {
+            return false;
+          }
+
+          // A trailing-row block only lands beside its own kind; elsewhere the editor
+          // drop zone takes it to the end of the row.
+          if (
+            isTrailingType(editor, sourceDragType) &&
+            !isTrailingType(editor, findNodeInfo()?.node.type.name)
+          ) {
             return false;
           }
 
@@ -476,6 +518,8 @@ export const SortableItemWrapper = ({
             lastEdgeRef.current = null;
             return;
           }
+
+          if (applyTrailingEdge(self.data, source.data)) return;
 
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
@@ -619,6 +663,8 @@ export const SortableItemWrapper = ({
             setClosestEdge(null);
             return;
           }
+
+          if (applyTrailingEdge(self.data, source.data)) return;
 
           // Get real-time mouse position from the event
           const currentMouseY = location?.current?.input?.clientY ?? lastMouseYRef.current;
@@ -1071,7 +1117,10 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          "courier-flex courier-flex-col courier-relative draggable-item",
+          "courier-flex courier-relative draggable-item",
+          closestEdge === "left" || closestEdge === "right"
+            ? "courier-flex-row"
+            : "courier-flex-col",
           //  dragging && "is-dragging courier-opacity-50",
           className
         )}
@@ -1079,6 +1128,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       >
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
+        {closestEdge === "left" && <DropIndicatorPlaceholder type={dragType} inline="before" />}
 
         {/* `courier-pl-10` reserves the in-row strip the absolutely-positioned
             handle below sits on. Every channel needs it, and removing it here
@@ -1163,6 +1213,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
 
         {/* Bottom edge drag indicator */}
         {closestEdge === "bottom" && <DropIndicatorPlaceholder type={dragType} />}
+        {closestEdge === "right" && <DropIndicatorPlaceholder type={dragType} inline="after" />}
       </NodeViewWrapper>
     );
   }

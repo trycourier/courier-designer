@@ -9,7 +9,11 @@ export {
   SideBarItemDetails as EmailSideBarItemDetails,
 } from "./Channels/Email/SideBar";
 export { SideBar as InboxSideBar } from "./Channels/Inbox/SideBar";
-export { MSTeamsSideBar, MSTeamsSideBarItemDetails } from "./Channels/MSTeams/SideBar";
+export {
+  MSTeamsSideBar,
+  MSTeamsSideBarItemDetails,
+  useMSTeamsSidebarHasDetails,
+} from "./Channels/MSTeams/SideBar";
 export { SlackSideBar, SlackSideBarItemDetails } from "./Channels/Slack/SideBar";
 export { WhatsappSideBar } from "./Channels/Whatsapp/WhatsappSideBar";
 
