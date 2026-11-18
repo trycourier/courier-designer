@@ -2409,6 +2409,90 @@
       -apple-system,
       sans-serif;
 
+    /* Teams sends every button in one ActionSet after the message, so draw them
+     * there: after all other blocks, side by side, whatever their order in the doc. */
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 8px;
+
+    & > * {
+      flex: 0 0 100%;
+    }
+
+    & > .react-renderer.node-button {
+      flex: 0 0 auto;
+      order: 1;
+    }
+
+    /* Each node reserves 40px for its drag handle; overlap it so buttons sit 8px apart, as in Teams. */
+    & > .react-renderer.node-button ~ .react-renderer.node-button {
+      margin-left: -40px !important;
+    }
+
+    /* A button dropped beside another: the ghost takes the gap the button will fill. */
+    .courier-inline-drop-ghost[data-inline="before"] {
+      margin-left: 40px;
+      margin-right: -32px;
+    }
+
+    .courier-inline-drop-ghost[data-inline="after"] {
+      margin-left: 8px;
+    }
+  }
+}
+
+/* Teams channel post. Blocks keep a 24px handle inset; pull it back so text lines up
+ * under the app icon, as in Teams. */
+.courier-msteams-post-body > div {
+  margin-left: -24px;
+}
+
+/* A message with buttons is delivered as an Adaptive Card, so draw that card. */
+.courier-msteams-post-body:has(.node-button) {
+  max-width: 520px;
+  padding: 16px;
+  border-radius: 6px;
+  background-color: #fafafa;
+  border: 1px solid #e0e0e0;
+
+  :is(.dark &) {
+    background-color: #333333;
+    border-color: transparent;
+  }
+}
+
+/* Drop ghost for a Teams button, the size of the button it stands for. */
+.courier-msteams-editor .courier-inline-drop-ghost,
+[data-trailing-drop] .courier-msteams-editor .ProseMirror::after {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: flex-start;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 12px;
+  @apply courier-border-2 courier-border-dashed courier-border-accent-foreground courier-text-accent-foreground dark:courier-border-accent dark:courier-text-accent;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+/* Ending the row: after the last button, or where the first one will sit (24px = text inset). */
+[data-trailing-drop] .courier-msteams-editor .ProseMirror {
+  &::after {
+    content: "Button";
+    order: 1;
+  }
+
+  &:not(:has(> .node-button))::after {
+    margin-left: 24px;
+  }
+}
+
+.courier-msteams-editor {
+  .ProseMirror {
     p {
       font-size: 14px;
       line-height: 20px;
@@ -2447,6 +2531,50 @@
           .node-element {
             hr {
               @apply dark:!courier-bg-foreground;
+            }
+          }
+        }
+
+        /* Teams draws an Action.OpenUrl as a left-aligned, neutral Fluent button,
+         * whatever colours the email-style button attrs carry. */
+        &.node-button {
+          .node-element {
+            > div {
+              @apply !courier-justify-start;
+
+              > a {
+                @apply courier-no-underline !courier-mr-auto !courier-ml-0;
+              }
+
+              > div,
+              > a > div {
+                @apply !courier-bg-white !courier-mr-auto !courier-ml-0 !courier-text-[#242424];
+                border: 1px solid #d1d1d1 !important;
+                border-radius: 4px !important;
+                padding: 5px 12px !important;
+                font-weight: 600 !important;
+                font-size: 14px !important;
+                font-style: normal !important;
+                line-height: 20px !important;
+                box-shadow: none !important;
+
+                &:hover {
+                  @apply !courier-bg-[#f5f5f5];
+                }
+              }
+            }
+          }
+
+          :is(.dark &) .node-element > div {
+            > div,
+            > a > div {
+              background-color: #292929 !important;
+              border-color: #6b6b6b !important;
+              color: #ffffff !important;
+
+              &:hover {
+                background-color: #3d3d3d !important;
+              }
             }
           }
         }

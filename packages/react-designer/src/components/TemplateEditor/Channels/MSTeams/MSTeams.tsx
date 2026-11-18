@@ -15,6 +15,7 @@ import {
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { DropRules } from "@/components/extensions/DropRules";
 import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -172,6 +173,8 @@ export interface MSTeamsRenderProps {
   onUpdate: ({ editor }: { editor: Editor }) => void;
   items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
+  /** Clears the selection, as Email's render props do, e.g. on a click outside the canvas. */
+  setSelectedNode?: (node: Node | null) => void;
   msteamsEditor: Editor | null;
   textMenuConfig: TextMenuConfig;
 }
@@ -306,10 +309,11 @@ export const getTextMenuConfigForMSTeamsNode = (
         variable: { state: "enabled" },
         ...msteamsCommonConfigs,
       };
+    // An Adaptive Card action title is plain text, so label formatting would not be sent.
     case "button":
       return {
-        bold: { state: "enabled" },
-        italic: { state: "enabled" },
+        bold: { state: "hidden" },
+        italic: { state: "hidden" },
         ...msteamsCommonConfigs,
       };
     default:
@@ -415,7 +419,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     // Filter visible blocks to only include supported types for MSTeams
     const filteredVisibleBlocks = useMemo(() => {
       // MSTeams supports a subset of block types
-      const supportedBlocks: BlockElementType[] = ["text", "divider", "list"];
+      const supportedBlocks: BlockElementType[] = ["text", "divider", "button", "list"];
       const blocks = visibleBlocks.filter((block) => {
         const blockType = isPresetReference(block) ? block.type : block;
         return supportedBlocks.includes(blockType as BlockElementType);
@@ -586,10 +590,9 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             disableVariablesAutocomplete,
             textMarks: { underline: "disabled", strike: "disabled" },
           }),
-          MessagingChannelPaste.configure({
-            headingBehavior: "strip",
-            blockedNodeTypes: ["button"],
-          }),
+          MessagingChannelPaste.configure({ headingBehavior: "strip" }),
+          // Teams sends every button in one row after the message, so they drop there.
+          DropRules.configure({ trailingTypes: ["button"] }),
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [
@@ -693,6 +696,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             onUpdate: onUpdateHandler,
             items,
             selectedNode,
+            setSelectedNode,
             msteamsEditor: templateEditor,
             textMenuConfig,
           })}
