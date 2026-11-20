@@ -41,7 +41,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   const linkTrackingEnabled = useAtomValue(linkTrackingEnabledAtom);
   const textareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
-  const form = useForm<z.infer<typeof linkSchema>>({
+  const form = useForm<z.input<typeof linkSchema>, unknown, z.output<typeof linkSchema>>({
     resolver: zodResolver(linkSchema),
     defaultValues: {
       href: mark?.attrs.href || "",

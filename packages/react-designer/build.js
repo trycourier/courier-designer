@@ -58,7 +58,8 @@ const getExternalDeps = () => {
     // date-fns 2 / date-fns-tz 1 ship ESM only under `module`, with no `exports`,
     // so Node's ESM loader falls back to CJS and loses the named exports.
     // Bundling also pins the exact versions the renderer uses.
-    const bundledPackages = [...pragmaticDndPackages, 'date-fns', 'date-fns-tz'];
+    // Bundle the resolver so its Zod imports resolve from Designer's package.
+    const bundledPackages = [...pragmaticDndPackages, 'date-fns', 'date-fns-tz', '@hookform/resolvers'];
     const filteredDeps = deps.filter(dep => {
       return !bundledPackages.some(pkg => dep === pkg || dep.startsWith(`${pkg}/`) || (pkg.startsWith('@atlaskit') && dep.startsWith(pkg)));
     });
