@@ -33,7 +33,7 @@ interface DividerFormProps {
 }
 
 export const DividerForm = ({ element, editor, hideCloseButton = false }: DividerFormProps) => {
-  const form = useForm<z.infer<typeof dividerSchema>>({
+  const form = useForm<z.input<typeof dividerSchema>, unknown, z.output<typeof dividerSchema>>({
     resolver: zodResolver(dividerSchema),
     defaultValues: {
       ...defaultDividerProps,
@@ -52,7 +52,7 @@ export const DividerForm = ({ element, editor, hideCloseButton = false }: Divide
     return null;
   }
 
-  const variant = form.watch("variant");
+  const variant = form.watch("variant") ?? defaultDividerProps.variant;
 
   return (
     <Form {...form}>

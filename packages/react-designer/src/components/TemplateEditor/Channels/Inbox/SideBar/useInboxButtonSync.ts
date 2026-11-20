@@ -7,7 +7,7 @@ import type { ButtonRowProps } from "@/components/extensions/ButtonRow/ButtonRow
 
 interface UseInboxButtonSyncOptions<T extends Record<string, unknown>> {
   editor: Editor | null;
-  form: UseFormReturn<T>;
+  form: Pick<UseFormReturn<T>, "getValues" | "setValue">;
   buttonIndex: 0 | 1;
   labelField: keyof T & string;
   defaultLabel: string;

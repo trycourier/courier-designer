@@ -7,6 +7,13 @@ describe("validateElemental", () => {
     elements,
   });
 
+  it("returns a field-specific error for an unsupported version", () => {
+    expect(validateElemental({ version: "2020-01-01", elements: [] })).toMatchObject({
+      success: false,
+      errors: [{ path: ["version"], message: expect.any(String) }],
+    });
+  });
+
   describe("text node locales", () => {
     it("should accept text node with content-string locales", () => {
       const result = validateElemental(
