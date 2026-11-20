@@ -38,7 +38,7 @@ interface TextBlockFormProps {
 }
 
 export const TextBlockForm = ({ element, editor, hideCloseButton = false }: TextBlockFormProps) => {
-  const form = useForm<z.infer<typeof textBlockSchema>>({
+  const form = useForm<z.input<typeof textBlockSchema>, unknown, z.output<typeof textBlockSchema>>({
     resolver: zodResolver(textBlockSchema),
     defaultValues: {
       ...defaultTextBlockProps,

@@ -34,7 +34,11 @@ export const ColumnCellForm = ({
   editor,
   hideCloseButton = false,
 }: ColumnCellFormProps) => {
-  const form = useForm<z.infer<typeof columnCellSchema>>({
+  const form = useForm<
+    z.input<typeof columnCellSchema>,
+    unknown,
+    z.output<typeof columnCellSchema>
+  >({
     resolver: zodResolver(columnCellSchema),
     defaultValues: {
       ...defaultColumnCellProps,

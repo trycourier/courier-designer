@@ -5,8 +5,8 @@ import { isLoopPath, loopRootAllowed } from "@/lib/utils/handlebars/loopPath";
 export const listSchema = z.object({
   id: z.string().optional(),
   listType: z.enum(["ordered", "unordered"]),
-  paddingVertical: z.coerce.number().min(0),
-  paddingHorizontal: z.coerce.number().min(0),
+  paddingVertical: z.coerce.number<number>().min(0),
+  paddingHorizontal: z.coerce.number<number>().min(0),
   fontSize: typographyOverrideSchema,
   lineHeight: typographyOverrideSchema,
   loop: z

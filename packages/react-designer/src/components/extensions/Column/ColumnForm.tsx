@@ -35,7 +35,7 @@ interface ColumnFormProps {
 }
 
 export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnFormProps) => {
-  const form = useForm<z.infer<typeof columnSchema>>({
+  const form = useForm<z.input<typeof columnSchema>, unknown, z.output<typeof columnSchema>>({
     resolver: zodResolver(columnSchema),
     defaultValues: {
       ...defaultColumnProps,
@@ -200,7 +200,7 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
                 <ToggleGroup
                   type="single"
                   className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
-                  value={field.value.toString()}
+                  value={field.value?.toString()}
                   onValueChange={(value) => {
                     if (value) {
                       const newCount = Number(value);
