@@ -790,6 +790,15 @@ export const usePragmaticDnd = ({
         const dropTargets = location.current.dropTargets;
         const dropTarget = dropTargets[0];
 
+        // Dropped back on itself (a whole-drag block's own slot): it stays where it was.
+        if (dropTarget && (dropTarget.data as { id?: unknown }).id === sourceData.id) {
+          cleanupPlaceholder();
+          setIsDragging(false);
+          setActiveId(null);
+          setActiveDragType(null);
+          return;
+        }
+
         if (!dropTarget) {
           cleanupPlaceholder();
           setIsDragging(false);
