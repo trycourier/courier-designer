@@ -75,6 +75,8 @@ export const SortableItemWrapper = ({
   const handleRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // The dragged block's text, shown in an inline drop ghost so the row reads as reordered.
+  const [dragLabel, setDragLabel] = useState<string | null>(null);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
@@ -166,6 +168,13 @@ export const SortableItemWrapper = ({
       if (!isTrailingType(editor, sourceDragType)) return false;
       const edge = sourceData.id === id ? null : extractClosestEdge(selfData);
       setDragType(sourceDragType ?? null);
+      let label: string | null = null;
+      if (sourceData.type === "editor") {
+        editor.state.doc.forEach((node) => {
+          if (node.attrs.id === sourceData.id) label = node.textContent || null;
+        });
+      }
+      setDragLabel(label);
       if (edge !== lastEdgeRef.current) {
         lastEdgeRef.current = edge;
         setClosestEdge(edge);
@@ -382,6 +391,18 @@ export const SortableItemWrapper = ({
             isTrailingType(editor, (source?.data as { dragType?: string } | undefined)?.dragType) &&
             isTrailingType(editor, data.nodeType)
           ) {
+            // Moving one along the row takes the hovered one's place, whichever half is
+            // under the pointer: a sortable row, not a "left or right of it" choice.
+            const moved = source?.data as { type?: string; index?: number } | undefined;
+            const sourceIndex = moved?.type === "editor" ? moved.index : undefined;
+            if (typeof sourceIndex === "number" && sourceIndex !== data.index) {
+              // One allowed edge: attachClosestEdge stores it under the hitbox's own key.
+              return attachClosestEdge(data, {
+                input,
+                element: targetElement,
+                allowedEdges: [sourceIndex < data.index ? "right" : "left"],
+              });
+            }
             return attachClosestEdge(data, {
               input,
               element: targetElement,
@@ -838,6 +859,7 @@ export const SortableItemWrapper = ({
       dragging={isDragging}
       closestEdge={closestEdge}
       dragType={dragType}
+      dragLabel={dragLabel}
       handleRef={handleRef}
       contentRef={contentRef}
       editor={editor}
@@ -856,6 +878,7 @@ export interface SortableItemProps {
   dragging?: boolean;
   closestEdge?: Edge | null;
   dragType?: string | null;
+  dragLabel?: string | null;
   handleRef?: React.RefObject<HTMLButtonElement>;
   contentRef?: React.RefObject<HTMLDivElement>;
   fadeIn?: boolean;
@@ -877,11 +900,11 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       contentRef,
       closestEdge,
       dragType,
+      dragLabel,
       id,
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fadeIn,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       dragging,
       ...props
     },
@@ -1126,6 +1149,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           closestEdge === "left" || closestEdge === "right"
             ? "courier-flex-row"
             : "courier-flex-col",
+          // A whole-drag block leaves its slot while dragged; the ghost shows where it lands.
+          dragging && isWholeDragType(editor, node?.type.name) && "courier-hidden",
           //  dragging && "is-dragging courier-opacity-50",
           className
         )}
@@ -1133,7 +1158,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       >
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
-        {closestEdge === "left" && <DropIndicatorPlaceholder type={dragType} inline="before" />}
+        {closestEdge === "left" && (
+          <DropIndicatorPlaceholder type={dragType} label={dragLabel} inline="before" />
+        )}
 
         {/* `courier-pl-10` reserves the in-row strip the absolutely-positioned
             handle below sits on. Every channel needs it, and removing it here
@@ -1218,7 +1245,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
 
         {/* Bottom edge drag indicator */}
         {closestEdge === "bottom" && <DropIndicatorPlaceholder type={dragType} />}
-        {closestEdge === "right" && <DropIndicatorPlaceholder type={dragType} inline="after" />}
+        {closestEdge === "right" && (
+          <DropIndicatorPlaceholder type={dragType} label={dragLabel} inline="after" />
+        )}
       </NodeViewWrapper>
     );
   }
