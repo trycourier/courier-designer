@@ -212,8 +212,8 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     return (
       <MemoButton
         key={key}
-        tooltip={tooltip}
-        tooltipShortcut={shortcut}
+        tooltip={config.state === "disabled" && config.reason ? config.reason : tooltip}
+        tooltipShortcut={config.state === "disabled" ? undefined : shortcut}
         onClick={onClick}
         active={active}
         disabled={config.state === "disabled"}
@@ -235,13 +235,24 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
 
   const contentTypeGroup = renderGroup(
     [
-      menuConfig.contentType?.state === "enabled" && blockOptions.length > 0 && (
-        <MemoContentTypePicker
-          key="content-type"
-          options={blockOptions}
-          containerRef={toolbarRef}
-        />
-      ),
+      menuConfig.contentType?.state !== "hidden" &&
+        menuConfig.contentType?.state !== undefined &&
+        blockOptions.length > 0 && (
+          <MemoContentTypePicker
+            key="content-type"
+            // Disabled keeps the picker (to turn a heading back into text) but not the headings.
+            options={
+              menuConfig.contentType.state === "disabled"
+                ? blockOptions.map((option) =>
+                    option.type === "option" && option.id.startsWith("heading")
+                      ? { ...option, blocked: true }
+                      : option
+                  )
+                : blockOptions
+            }
+            containerRef={toolbarRef}
+          />
+        ),
     ],
     "content-type-group"
   );

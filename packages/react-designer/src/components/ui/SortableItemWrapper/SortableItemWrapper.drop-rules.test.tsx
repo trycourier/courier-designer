@@ -194,6 +194,11 @@ describe("SortableItemWrapper drop rules", () => {
       expect(edgesOf(config, "button")).toEqual(["left", "right"]);
     });
 
+    it("treats a button preset like a button", () => {
+      expect(mount(rules, 1, "paragraph").canDrop(sidebar("button:portal"))).toBe(false);
+      expect(edgesOf(mount(rules, 1, "button"), "button:portal")).toEqual(["left", "right"]);
+    });
+
     it("keeps the usual edges for other blocks dragged over a button", () => {
       expect(edgesOf(mount(rules, 1, "button"), "text")).toEqual(["top"]);
     });

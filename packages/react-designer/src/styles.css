@@ -2408,35 +2408,61 @@
       system-ui,
       -apple-system,
       sans-serif;
+  }
+}
 
-    /* Teams sends every button in one ActionSet after the message, so draw them
-     * there: after all other blocks, side by side, whatever their order in the doc. */
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 8px;
+/* Adaptive card: Teams sends every button in one ActionSet after the message, so draw them
+ * there, side by side. The document keeps them last too (DropRules trailingTypes). */
+[data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 8px;
 
-    & > * {
-      flex: 0 0 100%;
-    }
+  & > * {
+    flex: 0 0 100%;
+  }
 
-    & > .react-renderer.node-button {
-      flex: 0 0 auto;
-      order: 1;
-    }
+  & > .react-renderer.node-button {
+    flex: 0 0 auto;
+    order: 1;
+  }
 
-    /* Each node reserves 40px for its drag handle; overlap it so buttons sit 8px apart, as in Teams. */
-    & > .react-renderer.node-button ~ .react-renderer.node-button {
-      margin-left: -40px !important;
-    }
+  /* Each node reserves 40px for its drag handle; overlap it so buttons sit 8px apart, as in Teams. */
+  & > .react-renderer.node-button ~ .react-renderer.node-button {
+    margin-left: -40px !important;
+  }
 
-    /* A button dropped beside another: the ghost takes the gap the button will fill. */
-    .courier-inline-drop-ghost[data-inline="before"] {
-      margin-left: 40px;
-      margin-right: -32px;
-    }
+  /* A button dropped beside another: the ghost takes the gap the button will fill. */
+  .courier-inline-drop-ghost[data-inline="before"] {
+    margin-left: 40px;
+    margin-right: -32px;
+  }
 
-    .courier-inline-drop-ghost[data-inline="after"] {
-      margin-left: 8px;
+  .courier-inline-drop-ghost[data-inline="after"] {
+    margin-left: 8px;
+  }
+}
+
+/* Text: Teams gets a button as a markdown link where it sits, so draw it as that link. */
+/* The post-body class out-ranks the shared Teams button rule further down. */
+[data-msteams-format="text"]
+  .courier-msteams-post-body
+  .courier-msteams-editor
+  .ProseMirror
+  > .react-renderer.node-button
+  .node-element
+  > div {
+  > div,
+  > a > div {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-weight: 400 !important;
+    color: #5b5fc7 !important;
+
+    :is(.dark &) {
+      color: #7f85f5 !important;
     }
   }
 }
@@ -2447,8 +2473,8 @@
   margin-left: -24px;
 }
 
-/* A message with buttons is delivered as an Adaptive Card, so draw that card. */
-.courier-msteams-post-body:has(.node-button) {
+/* An Adaptive card message with buttons is delivered as a card, so draw that card. */
+[data-msteams-format="adaptive_card"] .courier-msteams-post-body:has(.node-button) {
   max-width: 520px;
   padding: 16px;
   border-radius: 6px;
@@ -2480,7 +2506,7 @@
 }
 
 /* Ending the row: after the last button, or where the first one will sit (24px = text inset). */
-[data-trailing-drop] .courier-msteams-editor .ProseMirror {
+[data-msteams-format="adaptive_card"] [data-trailing-drop] .courier-msteams-editor .ProseMirror {
   &::after {
     content: "Button";
     order: 1;

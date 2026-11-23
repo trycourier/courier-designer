@@ -2,6 +2,8 @@ export type TextMenuItemState = "enabled" | "disabled" | "hidden";
 
 export interface TextMenuItem {
   state: TextMenuItemState;
+  /** Tooltip shown instead of the item's name while it is disabled, saying why. */
+  reason?: string;
 }
 
 export interface ConditionalRule {

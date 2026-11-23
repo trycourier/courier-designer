@@ -15,7 +15,8 @@ import {
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { DropRules } from "@/components/extensions/DropRules";
+import { DropRules, setTrailingTypes } from "@/components/extensions/DropRules";
+import { useMSTeamsFormat, type MSTeamsFormat } from "./msteamsFormat";
 import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -260,10 +261,26 @@ const msteamsDefaultConfig: TextMenuConfig = {
  * Get text menu configuration for an MS Teams node based on selection state
  * This function applies MS Teams-specific constraints while respecting text selection
  */
+const CARD_UNSUPPORTED_REASON =
+  "An Adaptive card can't show this. Switch to the Text message format in the MS Teams channel settings.";
+
+/** In an Adaptive card, quotes and headings would reach Teams as raw "> " and "#". */
+const withMSTeamsFormat = (config: TextMenuConfig, format: MSTeamsFormat): TextMenuConfig => {
+  if (format !== "adaptive_card") return config;
+  const disable = (item: TextMenuConfig["quote"]) =>
+    item && item.state !== "hidden"
+      ? { state: "disabled" as const, reason: CARD_UNSUPPORTED_REASON }
+      : item;
+  return { ...config, quote: disable(config.quote), contentType: disable(config.contentType) };
+};
+
 export const getTextMenuConfigForMSTeamsNode = (
   nodeName: string,
-  hasTextSelection: boolean = false
-): TextMenuConfig => {
+  hasTextSelection: boolean = false,
+  format: MSTeamsFormat = "text"
+): TextMenuConfig => withMSTeamsFormat(getBaseTextMenuConfig(nodeName, hasTextSelection), format);
+
+const getBaseTextMenuConfig = (nodeName: string, hasTextSelection: boolean): TextMenuConfig => {
   const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
 
   if (isTextNode && hasTextSelection) {
@@ -353,6 +370,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
+    const { format } = useMSTeamsFormat();
     const isDragging = useAtomValue(isDraggingAtom);
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
@@ -413,8 +431,21 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       if (!selectedNode) {
         return msteamsDefaultConfig;
       }
-      return getTextMenuConfigForMSTeamsNode(selectedNode.type.name, hasTextSelection);
-    }, [selectedNode, hasTextSelection]);
+      return getTextMenuConfigForMSTeamsNode(selectedNode.type.name, hasTextSelection, format);
+    }, [selectedNode, hasTextSelection, format]);
+
+    // The format decides which blocks the live editor takes: an Adaptive card keeps buttons
+    // in a trailing row (and moves any to the end), and refuses pasted dividers; Text refuses
+    // pasted buttons. Both read these options at drop/paste time, so no editor rebuild.
+    useEffect(() => {
+      if (!templateEditor || templateEditor.isDestroyed) return;
+      const isCard = format === "adaptive_card";
+      const paste = templateEditor.extensionManager?.extensions.find(
+        (e) => e.name === MessagingChannelPaste.name
+      );
+      if (paste) paste.options.blockedNodeTypes = isCard ? ["divider"] : ["button"];
+      setTrailingTypes(templateEditor, isCard ? ["button"] : null);
+    }, [templateEditor, format]);
 
     // Filter visible blocks to only include supported types for MSTeams
     const filteredVisibleBlocks = useMemo(() => {
@@ -592,7 +623,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           }),
           MessagingChannelPaste.configure({ headingBehavior: "strip" }),
           // Teams sends every button in one row after the message, so they drop there.
-          DropRules.configure({ trailingTypes: ["button"] }),
+          // Trailing types follow the format; see the effect that sets them.
+          DropRules,
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [
