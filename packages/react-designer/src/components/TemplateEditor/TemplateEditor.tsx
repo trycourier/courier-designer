@@ -23,7 +23,9 @@ import {
   DEFAULT_ROUTING,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
+import { MainLayout } from "../ui/MainLayout";
 import {
+  Channels,
   EmailLayout,
   InboxLayout,
   MSTeamsLayout,
@@ -31,6 +33,8 @@ import {
   SlackLayout,
   SMSLayout,
   WhatsappLayout,
+  WhatsappAuthenticationLayout,
+  type WhatsappAuthenticationProps,
 } from "./Channels";
 import { useFonts } from "./hooks/useFonts";
 import {
@@ -133,6 +137,11 @@ export interface TemplateEditorProps
    * @default "strict"
    */
   defaultScope?: "strict" | "default";
+  /**
+   * Set when the template's WhatsApp category is Authentication: WhatsApp writes that message, so the
+   * WhatsApp channel shows it read-only with its options in the sidebar, and its content is never saved.
+   */
+  whatsappAuthentication?: WhatsappAuthenticationProps;
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -175,6 +184,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   sampleData,
   locale,
   defaultScope = "strict",
+  whatsappAuthentication,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -691,6 +701,24 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         readOnly={readOnly}
         {...rest}
       />
+    );
+  }
+
+  // Inside the same layout as every channel (tabs, publish, theme); read-only when either the editor or the host says so.
+  if (page === "template" && channel === "whatsapp" && whatsappAuthentication) {
+    return (
+      <MainLayout
+        theme={theme}
+        colorScheme={colorScheme}
+        readOnly={readOnly}
+        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
+        {...rest}
+      >
+        <WhatsappAuthenticationLayout
+          {...whatsappAuthentication}
+          readOnly={readOnly || whatsappAuthentication.readOnly}
+        />
+      </MainLayout>
     );
   }
 

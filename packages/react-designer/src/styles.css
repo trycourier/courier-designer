@@ -784,6 +784,15 @@
   }
 }
 
+/* An authentication message is WhatsApp's own text, drawn as plain bubble text */
+.courier-whatsapp-authentication-bubble {
+  @apply courier-px-3 courier-py-2 courier-text-sm courier-rounded-lg courier-bg-white dark:courier-bg-[#242626];
+}
+
+.courier-whatsapp-authentication-footer {
+  @apply courier-m-0 courier-mt-1 courier-text-xs courier-text-[#667781] dark:courier-text-[#8696A0];
+}
+
 /* Not overflow-hidden: the selected button's actions panel sits outside the rows */
 .courier-whatsapp-buttons {
   @apply courier-flex courier-flex-col courier-rounded-b-lg courier-bg-white courier-shadow-sm dark:courier-bg-[#242626];
