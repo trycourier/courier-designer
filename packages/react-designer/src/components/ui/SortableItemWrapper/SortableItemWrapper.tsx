@@ -3,6 +3,7 @@ import {
   acceptsSidebarBlock,
   getDropRules,
   isTrailingType,
+  isWholeDragType,
 } from "@/components/extensions/DropRules";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
@@ -176,7 +177,11 @@ export const SortableItemWrapper = ({
       draggable({
         element,
         // Disable drag handle in Shadow DOM contexts (it doesn't work due to event re-targeting)
-        dragHandle: isInShadowDom ? undefined : handle || undefined,
+        // A whole-drag block (Teams button) has no grip: the block itself is the source.
+        dragHandle:
+          isInShadowDom || isWholeDragType(editor, findNodeInfo()?.node.type.name)
+            ? undefined
+            : handle || undefined,
         canDrag: () => !isFixedFirstElement(),
         getInitialData: () => {
           const info = findNodeInfo();

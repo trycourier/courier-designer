@@ -191,6 +191,7 @@ describe("Whatsapp content stability", () => {
       fixedFirstBlock: true,
       sidebarTypes: ["text", "list"],
       trailingTypes: null,
+      wholeDragTypes: null,
     });
   });
 

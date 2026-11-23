@@ -623,8 +623,9 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           }),
           MessagingChannelPaste.configure({ headingBehavior: "strip" }),
           // Teams sends every button in one row after the message, so they drop there.
-          // Trailing types follow the format; see the effect that sets them.
-          DropRules,
+          // Trailing types follow the format (see the effect that sets them); buttons
+          // drag by the whole button, since a grip would sit on the next one in the row.
+          DropRules.configure({ wholeDragTypes: ["button"] }),
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [

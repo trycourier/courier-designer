@@ -2427,19 +2427,82 @@
     order: 1;
   }
 
-  /* Each node reserves 40px for its drag handle; overlap it so buttons sit 8px apart, as in Teams. */
+  /* The first button lines up with the text; the rest follow 8px apart (column-gap). */
   & > .react-renderer.node-button ~ .react-renderer.node-button {
-    margin-left: -40px !important;
+    margin-left: 0 !important;
   }
 
   /* A button dropped beside another: the ghost takes the gap the button will fill. */
   .courier-inline-drop-ghost[data-inline="before"] {
-    margin-left: 40px;
-    margin-right: -32px;
+    margin-right: 8px;
   }
 
   .courier-inline-drop-ghost[data-inline="after"] {
     margin-left: 8px;
+  }
+}
+
+/* Teams buttons drag by the whole button (DropRules wholeDragTypes), so they drop the grip
+ * and its 40px strip, which sat on the neighbouring button in the row. Selection is a ring
+ * that hugs the button, and its duplicate/delete toolbar sits beside it, horizontally. */
+.courier-msteams-editor .ProseMirror > .react-renderer.node-button {
+  width: fit-content;
+  margin-left: 24px !important;
+
+  .draggable-item {
+    cursor: grab;
+  }
+
+  .draggable-item > .courier-pl-10 {
+    padding-left: 0 !important;
+  }
+
+  [data-cypress="draggable-handle"] {
+    display: none !important;
+  }
+
+  .node-element::before,
+  .node-element > div::before {
+    display: none !important;
+  }
+
+  /* The press must reach the draggable wrapper: on the editable label it would start a text
+   * selection instead of a drag. The label is edited in the sidebar's Label field. */
+  .node-element {
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .node-element > div > div,
+  .node-element > div > a > div {
+    outline-offset: 2px;
+  }
+
+  &:hover .node-element > div > div,
+  &:hover .node-element > div > a > div {
+    outline: 2px solid #d1d1d1;
+  }
+
+  .selected-element .node-element > div > div,
+  .selected-element .node-element > div > a > div {
+    outline: 2px solid #0085ff !important;
+  }
+
+  .selected-element .courier-actions-panel {
+    display: flex !important;
+    flex-direction: row;
+    right: auto;
+    left: calc(100% + 6px);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .courier-actions-panel > hr {
+    width: 1px;
+    height: 20px;
+    border-top-width: 0;
+    border-left-width: 1px;
+    margin: 0 !important;
   }
 }
 

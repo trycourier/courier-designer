@@ -8,6 +8,7 @@ import {
   getDropRules,
   isFixedFirstBlock,
   isTrailingType,
+  isWholeDragType,
   setTrailingTypes,
 } from "./DropRules";
 
@@ -50,6 +51,7 @@ describe("with DropRules", () => {
       fixedFirstBlock: false,
       sidebarTypes: null,
       trailingTypes: null,
+      wholeDragTypes: null,
     });
     expect(acceptsSidebarBlock(e, "image")).toBe(true);
     expect(allowedInsertPosition(e, 0)).toBe(0);
@@ -112,5 +114,18 @@ describe("trailingTypes", () => {
     const e = create();
     setTrailingTypes(e, null);
     expect(order(e)).toEqual(["heading", "paragraph"]);
+  });
+});
+
+describe("wholeDragTypes", () => {
+  it("matches a block or preset type it lists, and nothing without the option", () => {
+    const e = create({ wholeDragTypes: ["heading"] });
+    expect(isWholeDragType(e, "heading")).toBe(true);
+    expect(isWholeDragType(e, "heading:big")).toBe(true);
+    expect(isWholeDragType(e, "paragraph")).toBe(false);
+  });
+
+  it("drags nothing whole by default", () => {
+    expect(isWholeDragType(create(), "heading")).toBe(false);
   });
 });
