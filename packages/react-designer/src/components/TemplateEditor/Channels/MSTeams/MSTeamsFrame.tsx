@@ -1,10 +1,13 @@
 import { UnionIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import type { MSTeamsFormat } from "./msteamsFormat";
 
 export interface MSTeamsFrameProps {
   children?: ReactNode;
   className?: string;
+  /** Styles key off it: an Adaptive card draws a card box with a trailing button row. */
+  format?: MSTeamsFormat;
 }
 
 // Fluent neutrals Teams uses for channel posts, light and dark.
@@ -30,12 +33,13 @@ const PostSkeleton = () => (
   </div>
 );
 
-export const MSTeamsFrame = ({ children, className }: MSTeamsFrameProps) => {
+export const MSTeamsFrame = ({ children, className, format = "text" }: MSTeamsFrameProps) => {
   return (
     <div
       // The visible card, which is wider than the editor inside it: the
       // gutter measures from here so a pill never lands on the frame.
       data-issue-gutter-edge=""
+      data-msteams-format={format}
       className={cn(
         "courier-w-full courier-max-w-[800px] courier-bg-[#F5F5F5] dark:courier-bg-[#1F1F1F] courier-rounded-lg courier-shadow-md courier-p-4 courier-mx-auto courier-flex courier-flex-col courier-gap-4",
         className

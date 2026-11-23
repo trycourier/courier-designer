@@ -14,6 +14,7 @@ export {
   MSTeamsSideBarItemDetails,
   useMSTeamsSidebarHasDetails,
 } from "./Channels/MSTeams/SideBar";
+export { useMSTeamsFormat, getMSTeamsFormat, type MSTeamsFormat } from "./Channels/MSTeams";
 export { SlackSideBar, SlackSideBarItemDetails } from "./Channels/Slack/SideBar";
 export { WhatsappSideBar } from "./Channels/Whatsapp/WhatsappSideBar";
 

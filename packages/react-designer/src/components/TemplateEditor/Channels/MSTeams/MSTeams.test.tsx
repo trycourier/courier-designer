@@ -361,6 +361,17 @@ describe("MSTeams Component", () => {
       expect(configWithoutSelection.alignCenter?.state).toBe("hidden");
     });
 
+    it("should disable quote and headings in an Adaptive card, which can't show them", () => {
+      const card = getTextMenuConfigForMSTeamsNode("paragraph", false, "adaptive_card");
+      expect(card.quote?.state).toBe("disabled");
+      expect(card.quote?.reason).toMatch(/MS Teams channel settings/);
+      expect(card.contentType?.state).toBe("disabled");
+
+      const text = getTextMenuConfigForMSTeamsNode("paragraph", false, "text");
+      expect(text.quote?.state).toBe("enabled");
+      expect(text.contentType?.state).toBe("enabled");
+    });
+
     it("should hide label formatting for buttons, since an Adaptive Card action title is plain text", () => {
       const buttonConfig = getTextMenuConfigForMSTeamsNode("button", true);
       expect(buttonConfig.bold?.state).toBe("hidden");
@@ -381,7 +392,7 @@ describe("MSTeams Component", () => {
       expect(sidebar).not.toContain("image");
     });
 
-    it("should not block pasted buttons", () => {
+    it("should configure paste handling, which the format then narrows", () => {
       const mockRender = vi.fn(() => <div>MSTeams Editor</div>);
       render(<MSTeams {...defaultProps} render={mockRender} />);
 

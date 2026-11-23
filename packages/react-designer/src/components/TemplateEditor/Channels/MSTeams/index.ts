@@ -3,3 +3,4 @@ export * from "./MSTeamsEditor";
 export * from "./MSTeamsFrame";
 export * from "./MSTeamsLayout";
 export * from "./SideBar";
+export * from "./msteamsFormat";
