@@ -37,6 +37,7 @@ vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
     dropConfig = config;
     return () => {};
   }),
+  monitorForElements: vi.fn(() => () => {}),
 }));
 
 vi.mock("@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge", () => ({
@@ -197,6 +198,24 @@ describe("SortableItemWrapper drop rules", () => {
     it("treats a button preset like a button", () => {
       expect(mount(rules, 1, "paragraph").canDrop(sidebar("button:portal"))).toBe(false);
       expect(edgesOf(mount(rules, 1, "button"), "button:portal")).toEqual(["left", "right"]);
+    });
+
+    it("refuses a block dropped on itself unless it drags whole", () => {
+      expect(
+        mount(rules, 1, "button").canDrop({
+          source: { data: { type: "editor", dragType: "button", id: "block-1", index: 1 } },
+        })
+      ).toBe(false);
+    });
+
+    it("takes a dragged button back on its own slot, to keep it in place", () => {
+      const config = mount({ ...rules, wholeDragTypes: ["button"] }, 1, "button");
+
+      expect(
+        config.canDrop({
+          source: { data: { type: "editor", dragType: "button", id: "block-1", index: 1 } },
+        })
+      ).toBe(true);
     });
 
     it("moves a button into the hovered one's place, whichever half the pointer is on", () => {

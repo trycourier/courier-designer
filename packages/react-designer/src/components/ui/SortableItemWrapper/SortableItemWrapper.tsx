@@ -25,6 +25,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
+  monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   attachClosestEdge,
@@ -77,6 +78,23 @@ export const SortableItemWrapper = ({
   const [isDragging, setIsDragging] = useState(false);
   // The dragged block's text, shown in an inline drop ghost so the row reads as reordered.
   const [dragLabel, setDragLabel] = useState<string | null>(null);
+  // A dragged whole-drag block leaves its slot only while another block is the target, so
+  // moving back off the others brings its slot back to drop it where it was.
+  const [isMovedAway, setIsMovedAway] = useState(false);
+
+  useEffect(() => {
+    if (!editor) return;
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.id === id,
+      onDrag: ({ location }) => {
+        const target = location.current.dropTargets[0]?.data as
+          | { id?: string; nodeType?: string }
+          | undefined;
+        setIsMovedAway(!!target && target.id !== id && isWholeDragType(editor, target.nodeType));
+      },
+      onDrop: () => setIsMovedAway(false),
+    });
+  }, [editor, id]);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
@@ -483,9 +501,11 @@ export const SortableItemWrapper = ({
           }
 
           // Only block the dragging element itself
-          // (edge-specific blocking is handled in onDragEnter/onDrag)
+          // (edge-specific blocking is handled in onDragEnter/onDrag).
+          // A whole-drag block (Teams button) is its own target: dropping it back on its
+          // slot keeps it where it was.
           if (source.data.id === id) {
-            return false;
+            return isWholeDragType(editor, findNodeInfo()?.node.type.name);
           }
 
           return true;
@@ -857,6 +877,7 @@ export const SortableItemWrapper = ({
       fadeIn={mountedWhileDragging}
       className={className}
       dragging={isDragging}
+      movedAway={isMovedAway}
       closestEdge={closestEdge}
       dragType={dragType}
       dragLabel={dragLabel}
@@ -876,6 +897,8 @@ export interface SortableItemProps {
   dragOverlay?: boolean;
   disabled?: boolean;
   dragging?: boolean;
+  /** A dragged whole-drag block whose drop target is another block. */
+  movedAway?: boolean;
   closestEdge?: Edge | null;
   dragType?: string | null;
   dragLabel?: string | null;
@@ -906,6 +929,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fadeIn,
       dragging,
+      movedAway,
       ...props
     },
     ref
@@ -1149,8 +1173,11 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           closestEdge === "left" || closestEdge === "right"
             ? "courier-flex-row"
             : "courier-flex-col",
-          // A whole-drag block leaves its slot while dragged; the ghost shows where it lands.
-          dragging && isWholeDragType(editor, node?.type.name) && "courier-hidden",
+          // A dragged whole-drag block stays in its slot, dimmed, until another block is the
+          // target; then it leaves the slot and the ghost shows where it lands.
+          dragging &&
+            isWholeDragType(editor, node?.type.name) &&
+            (movedAway ? "courier-hidden" : "courier-opacity-40"),
           //  dragging && "is-dragging courier-opacity-50",
           className
         )}
