@@ -20,6 +20,8 @@ export interface DropRulesOptions {
    * may change this option on the live extension when its mode changes.
    */
   trailingTypes: string[] | null;
+  /** Block types dragged by the whole block rather than a grip (MS Teams buttons). */
+  wholeDragTypes: string[] | null;
 }
 
 /** A drag type without its preset suffix: "button:primary" → "button". */
@@ -50,7 +52,12 @@ export const DropRules = Extension.create<DropRulesOptions>({
   name: "dropRules",
 
   addOptions() {
-    return { fixedFirstBlock: false, sidebarTypes: null, trailingTypes: null };
+    return {
+      fixedFirstBlock: false,
+      sidebarTypes: null,
+      trailingTypes: null,
+      wholeDragTypes: null,
+    };
   },
 
   addProseMirrorPlugins() {
@@ -116,3 +123,7 @@ export const setTrailingTypes = (editor: Editor | null | undefined, types: strin
     );
   }
 };
+
+/** Whether blocks of this type are dragged by the whole block (see `wholeDragTypes`). */
+export const isWholeDragType = (editor: EditorLike, type: unknown): boolean =>
+  !!getDropRules(editor)?.wholeDragTypes?.includes(baseType(type));
