@@ -8,6 +8,8 @@ export interface MessagingChannelPasteOptions {
   headingBehavior: { level: number } | "strip";
   /** Node type names that should be silently dropped on paste (e.g. "button" for Teams). */
   blockedNodeTypes?: string[];
+  /** Node type names whose content is kept but not the node (quotes in a Teams card). */
+  unwrapNodeTypes?: string[];
 }
 
 const RESET_ATTRS: Record<string, unknown> = {
@@ -126,6 +128,7 @@ export const MessagingChannelPaste = Extension.create<MessagingChannelPasteOptio
     return {
       headingBehavior: { level: 1 },
       blockedNodeTypes: [],
+      unwrapNodeTypes: [],
     };
   },
 
@@ -139,12 +142,28 @@ export const MessagingChannelPaste = Extension.create<MessagingChannelPasteOptio
             return transformHTML(html, opts);
           },
           transformPasted(slice) {
+            const unwrap = new Set(opts.unwrapNodeTypes ?? []);
             const mapped: Node[] = [];
-            slice.content.forEach((node) => {
+            let { openStart, openEnd } = slice;
+            // Its blocks take its place, one level up, as do those of a quote inside it.
+            const add = (node: Node, atStart: boolean, atEnd: boolean) => {
+              if (!unwrap.has(node.type.name)) {
+                mapped.push(node);
+                return;
+              }
+              if (atStart && openStart > 0) openStart -= 1;
+              if (atEnd && openEnd > 0) openEnd -= 1;
+              const last = node.childCount - 1;
+              node.forEach((child, _offset, index) =>
+                add(child, atStart && index === 0, atEnd && index === last)
+              );
+            };
+            const last = slice.content.childCount - 1;
+            slice.content.forEach((node, _offset, index) => {
               const normalized = normalizeNode(node, opts);
-              if (normalized) mapped.push(normalized);
+              if (normalized) add(normalized, index === 0, index === last);
             });
-            return new Slice(Fragment.from(mapped), slice.openStart, slice.openEnd);
+            return new Slice(Fragment.from(mapped), openStart, openEnd);
           },
         },
       }),

@@ -14,8 +14,11 @@ import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import {
   acceptsSidebarBlock,
   allowedInsertPosition,
+  getDropRules,
+  getLastTrailingTarget,
   isTrailingType,
   isFixedFirstBlock,
+  setLastTrailingTarget,
 } from "@/components/extensions/DropRules";
 import type { TiptapDoc } from "@/types/tiptap.types";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
@@ -789,6 +792,47 @@ export const usePragmaticDnd = ({
         const sourceData = source.data as unknown as DragData;
         const dropTargets = location.current.dropTargets;
         const dropTarget = dropTargets[0];
+        const keptTarget = getLastTrailingTarget();
+        setLastTrailingTarget(null);
+
+        // A trailing-row block lands where its ghost is: kept across a gap of the row, or, in
+        // an editor that sets these drops from its layout (MS Teams), wherever the pointer is.
+        // A target that sets its own position (the Teams "…" chip) keeps it.
+        const isTrailingDrag = !!activeEditor && isTrailingType(activeEditor, sourceData.dragType);
+        const fromLayout = isTrailingDrag && !!getDropRules(activeEditor)?.layoutTrailingDrop;
+        const targetSetsPosition =
+          (dropTarget?.data as { insertPos?: unknown } | undefined)?.insertPos !== undefined;
+        if (
+          keptTarget &&
+          dropTarget &&
+          activeEditor &&
+          isTrailingDrag &&
+          !targetSetsPosition &&
+          (fromLayout || dropTarget.data.id === "editor-drop-zone")
+        ) {
+          let insertPos: number | undefined;
+          activeEditor.state.doc.forEach((node, pos) => {
+            if (node.attrs.id === keptTarget.id) {
+              insertPos = keptTarget.edge === "left" ? pos : pos + node.nodeSize;
+            }
+          });
+          if (insertPos !== undefined) {
+            handleDrop(sourceData, { ...(dropTarget.data as unknown as DropData), insertPos });
+            setIsDragging(false);
+            setActiveId(null);
+            setActiveDragType(null);
+            cleanupPlaceholder();
+            return;
+          }
+        }
+        // Off the rows, a moved one stays where it was.
+        if (fromLayout && !keptTarget && !targetSetsPosition && sourceData.type !== "sidebar") {
+          cleanupPlaceholder();
+          setIsDragging(false);
+          setActiveId(null);
+          setActiveDragType(null);
+          return;
+        }
 
         // Dropped back on itself (a whole-drag block's own slot): it stays where it was.
         if (dropTarget && (dropTarget.data as { id?: unknown }).id === sourceData.id) {
@@ -853,13 +897,21 @@ export const usePragmaticDnd = ({
           }
         }
 
-        // A trailing-row block (Teams buttons) dropped anywhere else ends the row.
+        // A trailing-row block (Teams buttons) dropped anywhere else: a new one from the
+        // sidebar ends the row; one being moved stays put (it moves only onto the others).
         if (
           targetData.insertPos === undefined &&
           targetData.id === "editor-drop-zone" &&
           activeEditor &&
           isTrailingType(activeEditor, sourceData.dragType)
         ) {
+          if (sourceData.type !== "sidebar") {
+            cleanupPlaceholder();
+            setIsDragging(false);
+            setActiveId(null);
+            setActiveDragType(null);
+            return;
+          }
           targetData = { ...targetData, insertPos: activeEditor.state.doc.content.size };
         }
 

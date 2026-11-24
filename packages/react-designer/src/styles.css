@@ -2416,35 +2416,212 @@
 [data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 8px;
 
   & > * {
     flex: 0 0 100%;
   }
 
+  /* Every button, and the end-of-row ghost, starts at the text inset (24px) and pulls the
+   * next one back to 8px apart, so a wrapped line lines up with the text too. */
   & > .react-renderer.node-button {
     flex: 0 0 auto;
     order: 1;
+    margin-right: -16px;
   }
 
-  /* The first button lines up with the text; the rest follow 8px apart (column-gap). */
-  & > .react-renderer.node-button ~ .react-renderer.node-button {
-    margin-left: 0 !important;
+  /* While a button hosts the drop ghost, its wrappers step aside so the ghost is a row item
+   * of its own: it wraps to the next line on its own, as the dropped button will, instead
+   * of taking its host along. Both take a button's slot spacing. */
+  & > .react-renderer.node-button:has(> .draggable-item > .courier-inline-drop-ghost) {
+    display: contents;
+
+    & > .draggable-item {
+      display: contents;
+    }
+
+    & > .draggable-item > * {
+      flex: 0 0 auto;
+      order: 1;
+      margin-left: 24px !important;
+      margin-right: -16px !important;
+    }
   }
 
-  /* A button dropped beside another: the ghost takes the gap the button will fill. */
-  .courier-inline-drop-ghost[data-inline="before"] {
-    margin-right: 8px;
+  /* A dragged button that has left its slot takes its spacing along. */
+  & > .react-renderer.node-button:has(.draggable-item[class~="courier-hidden"]) {
+    display: none;
   }
 
-  .courier-inline-drop-ghost[data-inline="after"] {
-    margin-left: 8px;
+}
+
+/* Teams shows 6 buttons and puts the rest under a "…" menu (MSTeamsButtonOverflow): hide
+ * those here, and leave room after the 6th for the chip (40px wide, 8px either side). */
+[data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror {
+  & > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button {
+    &:has(~ .node-button) {
+      margin-right: 32px;
+    }
+
+    & ~ .node-button {
+      display: none;
+    }
   }
+}
+
+.courier-msteams-button-overflow {
+  position: absolute;
+  z-index: 20;
+}
+
+/* A full row ends at the "…" chip: a new button dropped past the 6th goes under it, so
+ * the chip is the target there, not a ghost after it. */
+[data-msteams-format="adaptive_card"]
+  [data-trailing-drop]
+  .courier-msteams-editor
+  .ProseMirror:has(
+    > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button
+  )::after {
+  display: none;
+}
+
+/* A new button, or one from under "…", dropped into a full row (MSTeamsButtonOverflow sets
+ * data-row-full-insert) pushes the 6th under "…", so the preview hides it. Dropped right
+ * after the 6th it goes under "…" itself, so the chip is the target there. */
+[data-row-full-insert] .courier-msteams-editor .ProseMirror {
+  &:has(.courier-inline-drop-ghost):not(
+      :has(> .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button:not(.node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button) .courier-inline-drop-ghost[data-inline="after"])
+    )
+    > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button:not(.node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button)
+    .draggable-item
+    > :not(.courier-inline-drop-ghost) {
+    display: none;
+  }
+
+  & > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button .courier-inline-drop-ghost[data-inline="after"] {
+    display: none;
+  }
+}
+
+[data-row-full-insert]:has(
+    .ProseMirror > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button .courier-inline-drop-ghost[data-inline="after"]
+  )
+  .courier-msteams-button-overflow-chip,
+[data-trailing-drop] .courier-msteams-button-overflow-chip,
+.courier-msteams-button-overflow-chip-target {
+  outline: 2px dashed #0085ff !important;
+  outline-offset: 2px;
+}
+
+.courier-msteams-button-overflow-chip,
+.courier-msteams-button-overflow-menu {
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #242424;
+
+  :is(.dark &) {
+    border-color: #5c5c5c;
+    background: #292929;
+    color: #ffffff;
+  }
+}
+
+.courier-msteams-button-overflow-chip {
+  width: 40px;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    outline: 2px solid #d1d1d1;
+    outline-offset: 2px;
+  }
+}
+
+.courier-msteams-button-overflow-chip-selected {
+  outline: 2px solid #0085ff !important;
+  outline-offset: 2px;
+}
+
+.courier-msteams-button-overflow-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: 4px 0;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
+}
+
+.courier-msteams-button-overflow-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: grab;
+  font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f5f5f5;
+
+    :is(.dark &) {
+      background: #3d3d3d;
+    }
+  }
+}
+
+.courier-msteams-button-overflow-item-selected {
+  color: #0085ff;
+}
+
+.courier-msteams-button-overflow-actions {
+  display: flex;
+  gap: 2px;
+  color: #616161;
+
+  button {
+    display: flex;
+    padding: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background: #e0e0e0;
+    }
+  }
+
+  :is(.dark &) {
+    color: #d6d6d6;
+
+    button:hover {
+      background: #4a4a4a;
+    }
+  }
+}
+
+/* Where a dragged button lands in the menu: a row the size of the others. */
+.courier-msteams-button-overflow-menu .courier-inline-drop-ghost {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 32px;
+  margin: 0 4px;
+  padding: 0 8px;
+  border: 2px dashed #0085ff;
+  border-radius: 4px;
+  color: #0085ff;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 /* Teams buttons drag by the whole button (DropRules wholeDragTypes), so they drop the grip
  * and its 40px strip, which sat on the neighbouring button in the row. Selection is a ring
- * that hugs the button, and its duplicate/delete toolbar sits beside it, horizontally. */
+ * that hugs the button, and its duplicate/delete toolbar sits below it, horizontally. */
 .courier-msteams-editor .ProseMirror > .react-renderer.node-button {
   width: fit-content;
   margin-left: 24px !important;
@@ -2488,13 +2665,16 @@
     outline: 2px solid #0085ff !important;
   }
 
+  /* Below the button, so it never covers the next button in the row. */
   .selected-element .courier-actions-panel {
     display: flex !important;
     flex-direction: row;
     right: auto;
-    left: calc(100% + 6px);
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: auto;
+    left: 0;
+    top: calc(100% + 2px);
+    transform: none;
+    z-index: 20;
   }
 
   .courier-actions-panel > hr {
@@ -2558,8 +2738,10 @@
   align-items: center;
   align-self: flex-start;
   box-sizing: border-box;
+  /* A button's slot is 40px with the button 4px in; its border is 1px, the ghost's 2px. */
   height: 32px;
-  padding: 0 12px;
+  margin-block: 4px;
+  padding: 0 11px;
   @apply courier-border-2 courier-border-dashed courier-border-accent-foreground courier-text-accent-foreground dark:courier-border-accent dark:courier-text-accent;
   border-radius: 4px;
   font-size: 14px;
@@ -2568,14 +2750,11 @@
   white-space: nowrap;
 }
 
-/* Ending the row: after the last button, or where the first one will sit (24px = text inset). */
+/* Ending the row: after the last button, or where the first one will sit. */
 [data-msteams-format="adaptive_card"] [data-trailing-drop] .courier-msteams-editor .ProseMirror {
   &::after {
     content: "Button";
     order: 1;
-  }
-
-  &:not(:has(> .node-button))::after {
     margin-left: 24px;
   }
 }

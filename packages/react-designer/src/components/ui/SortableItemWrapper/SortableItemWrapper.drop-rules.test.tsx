@@ -218,17 +218,15 @@ describe("SortableItemWrapper drop rules", () => {
       ).toBe(true);
     });
 
-    it("moves a button into the hovered one's place, whichever half the pointer is on", () => {
-      const edgeOf = (config: DropConfig, sourceIndex: number) =>
-        config.getData({
-          input: { clientY: 0 },
-          element: document.body,
-          source: { data: { type: "editor", dragType: "button", id: "src", index: sourceIndex } },
-        }).allowedEdges;
+    it("moves a button beside the hovered one, by the half under the pointer", () => {
+      const config = mount(rules, 1, "button");
+      const edges = config.getData({
+        input: { clientY: 0 },
+        element: document.body,
+        source: { data: { type: "editor", dragType: "button", id: "src", index: 0 } },
+      }).allowedEdges;
 
-      // Target is the button at index 1.
-      expect(edgeOf(mount(rules, 1, "button"), 0)).toEqual(["right"]);
-      expect(edgeOf(mount(rules, 1, "button"), 2)).toEqual(["left"]);
+      expect(edges).toEqual(["left", "right"]);
     });
 
     it("keeps the usual edges for other blocks dragged over a button", () => {
