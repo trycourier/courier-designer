@@ -435,15 +435,18 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     }, [selectedNode, hasTextSelection, format]);
 
     // The format decides which blocks the live editor takes: an Adaptive card keeps buttons
-    // in a trailing row (and moves any to the end), and refuses pasted dividers; Text refuses
-    // pasted buttons. Both read these options at drop/paste time, so no editor rebuild.
+    // in a trailing row (and moves any to the end), refuses pasted dividers and turns pasted
+    // quotes into plain text; Text refuses pasted buttons. Both read these options at drop/paste time, so no editor rebuild.
     useEffect(() => {
       if (!templateEditor || templateEditor.isDestroyed) return;
       const isCard = format === "adaptive_card";
       const paste = templateEditor.extensionManager?.extensions.find(
         (e) => e.name === MessagingChannelPaste.name
       );
-      if (paste) paste.options.blockedNodeTypes = isCard ? ["divider"] : ["button"];
+      if (paste) {
+        paste.options.blockedNodeTypes = isCard ? ["divider"] : ["button"];
+        paste.options.unwrapNodeTypes = isCard ? ["blockquote"] : [];
+      }
       setTrailingTypes(templateEditor, isCard ? ["button"] : null);
     }, [templateEditor, format]);
 
@@ -625,7 +628,10 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           // Teams sends every button in one row after the message, so they drop there.
           // Trailing types follow the format (see the effect that sets them); buttons
           // drag by the whole button, since a grip would sit on the next one in the row.
-          DropRules.configure({ wholeDragTypes: ["button"] }),
+          DropRules.configure({
+            wholeDragTypes: ["button"],
+            layoutTrailingDrop: true,
+          }),
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [

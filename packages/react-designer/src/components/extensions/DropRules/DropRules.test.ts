@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import {
   DropRules,
   acceptsSidebarBlock,
+  currentSourceId,
   allowedInsertPosition,
   getDropRules,
   isFixedFirstBlock,
@@ -110,6 +111,24 @@ describe("trailingTypes", () => {
     expect(order(editor)).toEqual(["paragraph", "heading", "heading"]);
   });
 
+  it("keeps the caret in the block it was in when trailing blocks move", () => {
+    editor = new Editor({
+      extensions: [StarterKit, DropRules.configure({ trailingTypes: ["heading"] })],
+      content: "<p>Body</p><h2>Header</h2>",
+    });
+    // Typing in "Body" between two headings, as a pasted button splitting the text does.
+    editor.commands.insertContentAt(0, "<h2>Pasted</h2>");
+    expect(order(editor)).toEqual(["paragraph", "heading", "heading"]);
+
+    editor.commands.setTextSelection(3);
+    editor.commands.insertContentAt(3, "<h2>Split</h2>");
+    editor.commands.insertContent("X");
+
+    expect(editor.getHTML()).toBe(
+      "<p>Bo</p><p>Xdy</p><h2>Split</h2><h2>Pasted</h2><h2>Header</h2>"
+    );
+  });
+
   it("leaves the order alone when off", () => {
     const e = create();
     setTrailingTypes(e, null);
@@ -127,5 +146,32 @@ describe("wholeDragTypes", () => {
 
   it("drags nothing whole by default", () => {
     expect(isWholeDragType(create(), "heading")).toBe(false);
+  });
+});
+
+describe("currentSourceId", () => {
+  const doc = (ids: string[]) => {
+    const nodes = ids.map((id) => ({ attrs: { id } }));
+    return {
+      state: {
+        doc: {
+          childCount: nodes.length,
+          child: (i: number) => nodes[i],
+          forEach: (fn: (node: { attrs: { id: string } }) => void) => nodes.forEach(fn),
+        },
+      },
+    } as unknown as Parameters<typeof currentSourceId>[0];
+  };
+
+  it("keeps an id the document still has", () => {
+    expect(currentSourceId(doc(["a", "b"]), { type: "editor", id: "b", index: 0 })).toBe("b");
+  });
+
+  it("finds a block whose id changed by the index it was dragged from", () => {
+    expect(currentSourceId(doc(["x", "y"]), { type: "editor", id: "old", index: 1 })).toBe("y");
+  });
+
+  it("leaves a sidebar drag alone", () => {
+    expect(currentSourceId(doc(["x"]), { type: "sidebar", id: "new" })).toBe("new");
   });
 });

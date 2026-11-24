@@ -2,8 +2,13 @@ import { Divider } from "@/components/ui-kit";
 import {
   acceptsSidebarBlock,
   getDropRules,
+  currentSourceId,
+  draggedBlockLabel,
+  getLastTrailingTarget,
   isTrailingType,
   isWholeDragType,
+  setLastTrailingTarget,
+  subscribeLastTrailingTarget,
 } from "@/components/extensions/DropRules";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
@@ -85,12 +90,16 @@ export const SortableItemWrapper = ({
   useEffect(() => {
     if (!editor) return;
     return monitorForElements({
-      canMonitor: ({ source }) => source.data.id === id,
+      canMonitor: ({ source }) => currentSourceId(editor, source.data) === id,
       onDrag: ({ location }) => {
         const target = location.current.dropTargets[0]?.data as
           | { id?: string; nodeType?: string }
           | undefined;
-        setIsMovedAway(!!target && target.id !== id && isWholeDragType(editor, target.nodeType));
+        const kept = getLastTrailingTarget();
+        setIsMovedAway(
+          (!!target && target.id !== id && isWholeDragType(editor, target.nodeType)) ||
+            (!!kept && kept.id !== id)
+        );
       },
       onDrop: () => setIsMovedAway(false),
     });
@@ -98,6 +107,28 @@ export const SortableItemWrapper = ({
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
+
+  // A trailing-row drag draws its ghost on the block the shared target names. It stays
+  // across a gap in the row (see getLastTrailingTarget) and goes once the drag moves on.
+  useEffect(
+    () =>
+      subscribeLastTrailingTarget(() => {
+        const target = getLastTrailingTarget();
+        const edge = target?.id === id ? target.edge : null;
+        const shown = lastEdgeRef.current;
+        if (!edge && shown !== "left" && shown !== "right") return;
+        if (edge && target) {
+          setDragType(target.dragType);
+          setDragLabel(target.label);
+        }
+        if (edge !== shown) {
+          lastEdgeRef.current = edge;
+          setClosestEdge(edge);
+          if (!edge) setDragType(null);
+        }
+      }),
+    [id]
+  );
   const bottomEdgeStableRef = useRef<boolean>(false);
   const bottomEdgeClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastMouseYRef = useRef<number | null>(null);
@@ -184,19 +215,16 @@ export const SortableItemWrapper = ({
     ): boolean => {
       const sourceDragType = (sourceData as { dragType?: string }).dragType;
       if (!isTrailingType(editor, sourceDragType)) return false;
+      if (getDropRules(editor)?.layoutTrailingDrop) return true;
       const edge = sourceData.id === id ? null : extractClosestEdge(selfData);
-      setDragType(sourceDragType ?? null);
-      let label: string | null = null;
-      if (sourceData.type === "editor") {
-        editor.state.doc.forEach((node) => {
-          if (node.attrs.id === sourceData.id) label = node.textContent || null;
-        });
+      if (edge !== "left" && edge !== "right") {
+        setLastTrailingTarget(null);
+        return true;
       }
-      setDragLabel(label);
-      if (edge !== lastEdgeRef.current) {
-        lastEdgeRef.current = edge;
-        setClosestEdge(edge);
-      }
+      // A drag from outside the row (the Teams "…" menu) brings its label along.
+      const label = draggedBlockLabel(editor, sourceData);
+      // The block that draws the ghost picks it up from the shared target (see below).
+      setLastTrailingTarget({ id, edge, dragType: sourceDragType ?? null, label });
       return true;
     };
 
@@ -409,18 +437,8 @@ export const SortableItemWrapper = ({
             isTrailingType(editor, (source?.data as { dragType?: string } | undefined)?.dragType) &&
             isTrailingType(editor, data.nodeType)
           ) {
-            // Moving one along the row takes the hovered one's place, whichever half is
-            // under the pointer: a sortable row, not a "left or right of it" choice.
-            const moved = source?.data as { type?: string; index?: number } | undefined;
-            const sourceIndex = moved?.type === "editor" ? moved.index : undefined;
-            if (typeof sourceIndex === "number" && sourceIndex !== data.index) {
-              // One allowed edge: attachClosestEdge stores it under the hitbox's own key.
-              return attachClosestEdge(data, {
-                input,
-                element: targetElement,
-                allowedEdges: [sourceIndex < data.index ? "right" : "left"],
-              });
-            }
+            // Left or right half of the hovered button, measured on the row as shown: a
+            // moved button leaves its slot while dragged, so the halves match the result.
             return attachClosestEdge(data, {
               input,
               element: targetElement,
@@ -801,7 +819,17 @@ export const SortableItemWrapper = ({
             setClosestEdge(newEdge);
           }
         },
-        onDragLeave: () => {
+        onDragLeave: ({ source, location }) => {
+          // A trailing-row ghost stays while the pointer crosses a gap in the row (see
+          // getLastTrailingTarget); another block or leaving the row clears it.
+          if (
+            isTrailingType(editor, (source.data as { dragType?: string }).dragType) &&
+            (getDropRules(editor)?.layoutTrailingDrop ||
+              (getLastTrailingTarget()?.id === id &&
+                location.current.dropTargets[0]?.data.id === "editor-drop-zone"))
+          ) {
+            return;
+          }
           // For the last element with stable bottom edge, don't clear immediately
           // This prevents flickering when mouse briefly leaves the element bounds
           // Use a timeout to clear if mouse doesn't return within a reasonable time
