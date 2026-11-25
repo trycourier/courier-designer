@@ -70,6 +70,11 @@ export {
   WhatsappEditor,
   WhatsappPreview,
   type WhatsappPreviewProps,
+  WhatsappAuthenticationLayout,
+  WhatsappAuthenticationMessage,
+  WhatsappAuthenticationSideBar,
+  type WhatsappAuthenticationProps,
+  type WhatsappAuthenticationSettings,
 } from "./Channels";
 
 export { useDebouncedFlush } from "./hooks/useDebouncedFlush";

@@ -99,8 +99,7 @@ export const WhatsappEditorContent = ({ value }: { value?: TiptapDoc | null }) =
 
     // Get elements from Whatsapp channel (now uses elements instead of raw)
     const whatsappElements: ElementalNode[] = toEditorElements(
-      (element.type === "channel" && "elements" in element && element.elements) ||
-        defaultWhatsappContent,
+      bodyOrDefault(element),
       getWhatsappHeader(templateEditorContent)
     );
 
@@ -189,6 +188,15 @@ export const defaultWhatsappContent: ElementalNode[] = [
     content: "\n",
   },
 ];
+
+/**
+ * The channel's elements, or the default body when it has none: an emptied block (switching back from an
+ * Authentication template, whose text WhatsApp writes) opens like a new one, with its body line.
+ */
+const bodyOrDefault = (element: ElementalNode | undefined): ElementalNode[] =>
+  element?.type === "channel" && "elements" in element && element.elements?.length
+    ? element.elements
+    : defaultWhatsappContent;
 
 // Helper function to get or create default Whatsapp element
 const getOrCreateWhatsappElement = (
@@ -445,10 +453,7 @@ const WhatsappComponent = forwardRef<HTMLDivElement, WhatsappProps>(
 
       // Get elements from Whatsapp channel (now uses elements instead of raw)
       const whatsappElements: ElementalNode[] = toEditorElements(
-        (whatsappChannel?.type === "channel" &&
-          "elements" in whatsappChannel &&
-          whatsappChannel.elements) ||
-          defaultWhatsappContent,
+        bodyOrDefault(whatsappChannel),
         getWhatsappHeader(source),
         { preview: true }
       );
