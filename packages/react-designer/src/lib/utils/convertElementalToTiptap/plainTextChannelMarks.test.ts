@@ -11,8 +11,8 @@ const doc = (channel: string, elements: ElementalNode[]): ElementalContent => ({
   elements: [{ type: "channel", channel, elements }],
 });
 
-// SMS/Push editors run without formatting marks; a mark in the converted doc
-// makes Tiptap discard the whole document (C-21259).
+// SMS/Push/In-app editors run without formatting marks; a mark in the converted doc
+// makes Tiptap discard the whole document (C-21259, C-23104).
 describe("plain-text channels keep markdown markers as text", () => {
   it.each([
     [
@@ -26,6 +26,13 @@ describe("plain-text channels keep markdown markers as text", () => {
       "push",
       [
         { type: "meta", title: "P" },
+        { type: "text", content: MARKED },
+      ],
+    ],
+    [
+      "inbox",
+      [
+        { type: "meta", title: "Heading **bold**" },
         { type: "text", content: MARKED },
       ],
     ],

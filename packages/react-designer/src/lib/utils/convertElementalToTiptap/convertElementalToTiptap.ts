@@ -141,7 +141,7 @@ function withLiteralText<T>(literal: boolean, convert: () => T): T {
 }
 
 /**
- * SMS and Push editors have no bold/italic/strike/underline marks in their
+ * SMS, Push and In-app editors have no bold/italic/strike/underline marks in their
  * schema; emitting one makes Tiptap drop the whole document. Keep the markers
  * as literal text there instead.
  */
@@ -1769,7 +1769,10 @@ export function convertElementalToTiptap(
   // Process elements to convert consecutive action nodes to ButtonRow (only for Inbox channel)
   const processedElements: TiptapNode[] = [];
   const previousPlainTextMarks = plainTextMarks;
-  plainTextMarks = channelNode.channel === "sms" || channelNode.channel === "push";
+  plainTextMarks =
+    channelNode.channel === "sms" ||
+    channelNode.channel === "push" ||
+    channelNode.channel === "inbox";
   let convertedNodes: TiptapNode[];
   try {
     convertedNodes = targetChannelElements.flatMap(convertNode);
