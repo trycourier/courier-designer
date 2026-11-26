@@ -18,6 +18,8 @@ const CARD_UNSUPPORTED_NODES = new Set([
   "divider",
 ]);
 const REMOVED_NODES = new Set(["imageBlock", "inlineImage", "divider"]);
+// Nesting is shallow in practice; the cap only guards against a node that never resolves.
+const MAX_ROUNDS = 10;
 
 /**
  * An Adaptive card's text block shows no quotes, headings, images or dividers (the send
@@ -44,38 +46,49 @@ export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>(
           const paragraph = state.schema.nodes.paragraph;
           if (!paragraph) return null;
 
-          const found: { node: ProseMirrorNode; pos: number }[] = [];
-          state.doc.descendants((node, pos) => {
-            if (CARD_UNSUPPORTED_NODES.has(node.type.name)) {
-              found.push({ node, pos });
-              return false;
-            }
-            return true;
-          });
-          if (!found.length) return null;
-
           const tr = state.tr;
-          // Last first, so earlier positions stay valid.
-          for (const { node, pos } of found.reverse()) {
-            if (REMOVED_NODES.has(node.type.name)) {
-              tr.delete(pos, pos + node.nodeSize);
-            } else if (node.type.name === "heading") {
-              const attrs = Object.fromEntries(
-                Object.keys(paragraph.spec.attrs ?? {})
-                  .filter((key) => key in node.attrs)
-                  .map((key) => [key, node.attrs[key]])
-              );
-              tr.setNodeMarkup(pos, paragraph, attrs);
-            } else {
-              // Lift the quote's blocks out rather than replacing the quote, so the caret
-              // stays in the text being typed instead of mapping past it.
-              const range = tr.doc
-                .resolve(pos + 1)
-                .blockRange(tr.doc.resolve(pos + node.nodeSize - 1));
-              const target = range ? liftTarget(range) : null;
-              if (range && target !== null) tr.lift(range, target);
-              else tr.replaceWith(pos, pos + node.nodeSize, node.content);
+          // A quote can hold another quote (a pasted list item, say): lifting the outer one
+          // leaves the inner, so go over the result again until nothing is left to fix.
+          for (let round = 0; round < MAX_ROUNDS; round++) {
+            const found: { node: ProseMirrorNode; pos: number }[] = [];
+            tr.doc.descendants((node, pos) => {
+              if (CARD_UNSUPPORTED_NODES.has(node.type.name)) {
+                found.push({ node, pos });
+                return false;
+              }
+              return true;
+            });
+            if (!found.length) break;
+            const before = tr.doc;
+
+            // Last first, so earlier positions stay valid.
+            for (const { node, pos } of found.reverse()) {
+              if (REMOVED_NODES.has(node.type.name)) {
+                tr.delete(pos, pos + node.nodeSize);
+              } else if (node.type.name === "heading") {
+                const attrs = Object.fromEntries(
+                  Object.keys(paragraph.spec.attrs ?? {})
+                    .filter((key) => key in node.attrs)
+                    .map((key) => [key, node.attrs[key]])
+                );
+                tr.setNodeMarkup(pos, paragraph, attrs);
+              } else {
+                // Lift the quote's blocks out rather than replacing the quote, so the caret
+                // stays in the text being typed instead of mapping past it.
+                const range = tr.doc
+                  .resolve(pos + 1)
+                  .blockRange(tr.doc.resolve(pos + node.nodeSize - 1));
+                const target = range ? liftTarget(range) : null;
+                try {
+                  if (range && target !== null) tr.lift(range, target);
+                  else tr.replaceWith(pos, pos + node.nodeSize, node.content);
+                } catch {
+                  // Its parent can't take the quote's blocks here; leave it rather than throw.
+                }
+              }
             }
+            // Nothing could change this round: stop instead of trying the same again.
+            if (tr.doc.eq(before)) break;
           }
           return tr.docChanged ? tr : null;
         },

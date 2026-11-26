@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Editor, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { MSTeamsButtonLabelLock, MSTeamsButtonLabelLockPluginKey } from "./msteamsButtonLabelLock";
@@ -65,5 +65,27 @@ describe("MSTeamsButtonLabelLock", () => {
     e.commands.setTextSelection(2);
 
     expect(lock(e)).toEqual({ typed: false, keys: [false, false, false], pasted: false });
+  });
+
+  it("blocks cut in a button label and leaves it alone elsewhere", () => {
+    const e = make();
+    const plugin = MSTeamsButtonLabelLockPluginKey.get(e.state);
+    const cut = (
+      plugin?.props.handleDOMEvents as { cut: (v: Editor["view"], ev: Event) => boolean }
+    ).cut;
+    const event = () =>
+      ({ preventDefault: vi.fn() }) as unknown as Event & {
+        preventDefault: ReturnType<typeof vi.fn>;
+      };
+
+    e.commands.setTextSelection(insideButton(e));
+    const inButton = event();
+    expect(cut(e.view, inButton)).toBe(true);
+    expect(inButton.preventDefault).toHaveBeenCalled();
+
+    e.commands.setTextSelection(2);
+    const inText = event();
+    expect(cut(e.view, inText)).toBe(false);
+    expect(inText.preventDefault).not.toHaveBeenCalled();
   });
 });

@@ -117,4 +117,21 @@ describe("MSTeamsCardTextOnly", () => {
     expect(e.getText()).toContain("Next");
     expect(types(e).every((name) => name === "paragraph")).toBe(true);
   });
+
+  it("unwraps a quote nested in a quote (a pasted list item, say), keeping its text", () => {
+    const e = make(true);
+    e.chain()
+      .focus("end")
+      .insertContent(
+        "<ul><li><p>Item</p><blockquote><blockquote><p>Deep</p></blockquote></blockquote></li></ul>"
+      )
+      .run();
+
+    let quotes = 0;
+    e.state.doc.descendants((node) => {
+      if (node.type.name === "blockquote") quotes++;
+    });
+    expect(quotes).toBe(0);
+    expect(e.getText()).toContain("Deep");
+  });
 });

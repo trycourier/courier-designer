@@ -15,7 +15,7 @@ const LOCKED_KEYS = new Set(["Enter", "Backspace", "Delete"]);
 /**
  * A Teams button's label is edited in its sidebar form only. Its text isn't editable in
  * place, but a click or the arrow keys can still leave the caret in it, and then typing,
- * Enter (which split the button) or deleting would change it. Ignore those there.
+ * Enter (which split the button), deleting or cutting would change it. Ignore those there.
  */
 export const MSTeamsButtonLabelLock = Extension.create({
   name: "msteamsButtonLabelLock",
@@ -30,6 +30,14 @@ export const MSTeamsButtonLabelLock = Extension.create({
           handleTextInput: (view) => isInButtonLabel(view.state),
           handleKeyDown: (view, event) => LOCKED_KEYS.has(event.key) && isInButtonLabel(view.state),
           handlePaste: (view) => isInButtonLabel(view.state),
+          handleDOMEvents: {
+            // Cut deletes the selection too (Mod-a selects the whole label).
+            cut: (view, event) => {
+              if (!isInButtonLabel(view.state)) return false;
+              event.preventDefault();
+              return true;
+            },
+          },
         },
       }),
     ];
