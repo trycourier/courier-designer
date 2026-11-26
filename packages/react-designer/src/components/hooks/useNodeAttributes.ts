@@ -7,7 +7,7 @@ import { setFormUpdating } from "../TemplateEditor/store";
 interface UseNodeAttributesProps<T extends FieldValues> {
   editor: Editor | null;
   element?: ProseMirrorNode;
-  form: UseFormReturn<T>;
+  form: Pick<UseFormReturn<T>, "getValues" | "setValue">;
   nodeType: string;
 }
 

@@ -4,7 +4,7 @@ import { z } from "zod";
  * Optional px override that falls back to the document base and then the tier
  * preset. `null`/`0`/empty all mean "inherit" and are not written to Elemental.
  */
-export const typographyOverrideSchema = z.coerce.number().min(0).nullable().optional();
+export const typographyOverrideSchema = z.coerce.number<number>().min(0).nullable().optional();
 
 export const textBlockSchema = z.object({
   paddingVertical: z.number(),

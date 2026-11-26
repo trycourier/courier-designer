@@ -45,7 +45,7 @@ const buttonFormSchema = z.object({
   secondaryButtonUrl: z.string().default(""),
 });
 
-type ButtonFormValues = z.infer<typeof buttonFormSchema>;
+type ButtonFormValues = z.input<typeof buttonFormSchema>;
 
 /**
  * The style a canvas node is carrying. A node built before buttons carried their style falls
@@ -99,7 +99,7 @@ const SideBarComponent = () => {
     contentRef.current = templateEditorContent;
   }, [templateEditorContent]);
 
-  const form = useForm<ButtonFormValues>({
+  const form = useForm<ButtonFormValues, unknown, z.output<typeof buttonFormSchema>>({
     resolver: zodResolver(buttonFormSchema),
     defaultValues: {
       enableButton: false,
@@ -347,9 +347,9 @@ const SideBarComponent = () => {
       if (values.enableButton) {
         const primaryAction: ElementalActionNode = {
           type: "action",
-          content: values.buttonLabel,
+          content: values.buttonLabel ?? "Enter text",
           align: "left",
-          href: values.buttonUrl,
+          href: values.buttonUrl ?? "",
           style: values.buttonStyle,
         };
         newElements.push(primaryAction);
@@ -358,9 +358,9 @@ const SideBarComponent = () => {
       if (values.enableSecondaryButton) {
         const secondaryAction: ElementalActionNode = {
           type: "action",
-          content: values.secondaryButtonLabel,
+          content: values.secondaryButtonLabel ?? "Enter text",
           align: "left",
-          href: values.secondaryButtonUrl,
+          href: values.secondaryButtonUrl ?? "",
           style: values.secondaryButtonStyle,
         };
         newElements.push(secondaryAction);

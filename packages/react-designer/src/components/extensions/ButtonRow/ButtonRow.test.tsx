@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { ButtonRow, defaultButtonRowProps } from "./ButtonRow";
+import { buttonRowSchema } from "./ButtonRow.types";
 
 // Mock the ButtonRowComponentNode
 vi.mock("./ButtonRowComponent", () => ({
@@ -15,6 +16,17 @@ vi.mock("uuid", () => ({
 }));
 
 describe("ButtonRow Extension", () => {
+  it("preserves stored links and accepts an empty link", () => {
+    const values = {
+      button1Label: "Primary",
+      button1Link: " https://example.com/ ",
+      button2Label: "Secondary",
+      button2Link: "",
+    };
+    expect(buttonRowSchema.parse(values)).toEqual(values);
+    expect(buttonRowSchema.safeParse({ ...values, button1Link: "invalid" }).success).toBe(false);
+  });
+
   describe("Basic Configuration", () => {
     it("should be defined and have correct name", () => {
       expect(ButtonRow).toBeDefined();

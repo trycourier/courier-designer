@@ -63,7 +63,7 @@ const BaseElementalNode = z.object({
   ref: z.string().optional(),
   if: z.union([z.string(), ElementalConditionExpressionSchema]).optional(),
   loop: z.string().optional(),
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Text content nodes
@@ -120,7 +120,7 @@ const TextNodeWithElements: z.ZodType<ElementalTextNodeWithElements> = BaseEleme
   font_size: z.string().optional(),
   line_height: z.string().optional(),
   elements: z.array(TextContentNode), // Required for this variant
-  locales: z.record(TextNodeLocale).optional(),
+  locales: z.record(z.string(), TextNodeLocale).optional(),
 });
 
 const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> = BaseElementalNode.extend({
@@ -132,7 +132,7 @@ const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> = BaseElement
   format: z.literal("markdown").optional(),
   font_size: z.string().optional(),
   line_height: z.string().optional(),
-  locales: z.record(TextNodeLocale).optional(),
+  locales: z.record(z.string(), TextNodeLocale).optional(),
 });
 
 // Create union of both variants
@@ -145,7 +145,7 @@ const MetaNode: z.ZodType<ElementalMetaNode> = BaseElementalNode.extend({
   type: z.literal("meta"),
   title: z.string().optional(),
   image: z.string().optional(),
-  locales: z.record(z.object({ title: z.string().optional() })).optional(),
+  locales: z.record(z.string(), z.object({ title: z.string().optional() })).optional(),
 });
 
 const ChannelNode: z.ZodType<ElementalChannelNode> = BaseElementalNode.extend({
@@ -172,9 +172,10 @@ const ChannelNode: z.ZodType<ElementalChannelNode> = BaseElementalNode.extend({
     .optional(),
   locales: z
     .record(
+      z.string(),
       z.object({
         elements: z.array(z.lazy(() => ElementalNodeType)).optional(),
-        raw: z.record(z.unknown()).optional(),
+        raw: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .optional(),
@@ -189,6 +190,7 @@ const ImageNode: z.ZodType<ElementalImageNode> = BaseElementalNode.extend({
   width: z.string().optional(),
   locales: z
     .record(
+      z.string(),
       z.object({
         href: z.string().optional(),
         src: z.string().optional(),
@@ -208,6 +210,7 @@ const ActionNode: z.ZodType<ElementalActionNode> = BaseElementalNode.extend({
   disable_tracking: z.boolean().optional(),
   locales: z
     .record(
+      z.string(),
       z.object({
         content: z.string().optional(),
         href: z.string().optional(),
@@ -226,6 +229,7 @@ const GroupNode: z.ZodType<ElementalGroupNode> = BaseElementalNode.extend({
   elements: z.array(z.lazy(() => ElementalNodeType)),
   locales: z
     .record(
+      z.string(),
       z.object({
         elements: z.array(z.lazy(() => ElementalNodeType)).optional(),
       })
@@ -244,6 +248,7 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
   text_style: TextStyleEnum.optional(),
   locales: z
     .record(
+      z.string(),
       z.object({
         content: z.string().optional(),
       })
@@ -262,6 +267,7 @@ const HtmlNode: z.ZodType<ElementalHtmlNode> = BaseElementalNode.extend({
   content: z.string(),
   locales: z
     .record(
+      z.string(),
       z.object({
         content: z.string().optional(),
       })
@@ -324,7 +330,7 @@ export const validateElemental = (json: unknown) => {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors,
+        errors: error.issues,
       };
     }
     throw error;
