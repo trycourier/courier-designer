@@ -1,6 +1,7 @@
 import { Extension } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { liftTarget } from "@tiptap/pm/transform";
 
 export interface MSTeamsCardTextOnlyOptions {
   /** On while the Teams format is "adaptive_card"; MSTeams.tsx flips it with the format. */
@@ -9,13 +10,21 @@ export interface MSTeamsCardTextOnlyOptions {
 
 export const MSTeamsCardTextOnlyPluginKey = new PluginKey("msteamsCardTextOnly");
 
-const CARD_UNSUPPORTED_NODES = new Set(["heading", "blockquote", "imageBlock", "divider"]);
+const CARD_UNSUPPORTED_NODES = new Set([
+  "heading",
+  "blockquote",
+  "imageBlock",
+  "inlineImage",
+  "divider",
+]);
+const REMOVED_NODES = new Set(["imageBlock", "inlineImage", "divider"]);
 
 /**
  * An Adaptive card's text block shows no quotes, headings, images or dividers (the send
  * rejects the last three and a quote), and the menu and paste rules aren't the only way
  * in: `> `, `# ` and `---` input rules, Mod-Shift-b, and a dropped or pasted image file.
- * In card mode quotes and headings become plain paragraphs, and images and dividers go.
+ * In card mode quotes and headings become plain paragraphs, and images (inline ones
+ * too) and dividers go.
  */
 export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>({
   name: "msteamsCardTextOnly",
@@ -48,7 +57,7 @@ export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>(
           const tr = state.tr;
           // Last first, so earlier positions stay valid.
           for (const { node, pos } of found.reverse()) {
-            if (node.type.name === "imageBlock" || node.type.name === "divider") {
+            if (REMOVED_NODES.has(node.type.name)) {
               tr.delete(pos, pos + node.nodeSize);
             } else if (node.type.name === "heading") {
               const attrs = Object.fromEntries(
@@ -58,7 +67,14 @@ export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>(
               );
               tr.setNodeMarkup(pos, paragraph, attrs);
             } else {
-              tr.replaceWith(pos, pos + node.nodeSize, node.content);
+              // Lift the quote's blocks out rather than replacing the quote, so the caret
+              // stays in the text being typed instead of mapping past it.
+              const range = tr.doc
+                .resolve(pos + 1)
+                .blockRange(tr.doc.resolve(pos + node.nodeSize - 1));
+              const target = range ? liftTarget(range) : null;
+              if (range && target !== null) tr.lift(range, target);
+              else tr.replaceWith(pos, pos + node.nodeSize, node.content);
             }
           }
           return tr.docChanged ? tr : null;

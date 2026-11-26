@@ -25,6 +25,14 @@ const make = (enabled: boolean) => {
       StarterKit,
       leaf("imageBlock", "image-block"),
       leaf("divider", "divider-block"),
+      Node.create({
+        name: "inlineImage",
+        group: "inline",
+        inline: true,
+        atom: true,
+        parseHTML: () => [{ tag: "inline-image" }],
+        renderHTML: () => ["inline-image"],
+      }),
       MSTeamsCardTextOnly.configure({ enabled }),
     ],
     content: "<p>Start</p>",
@@ -75,6 +83,19 @@ describe("MSTeamsCardTextOnly", () => {
     expect(e.getText()).toContain("After");
   });
 
+  it("drops an inline image inside text in card mode", () => {
+    const e = make(true);
+    e.commands.setContent("<p>Before<inline-image></inline-image>After</p>");
+    e.commands.insertContent(" ");
+
+    let found = false;
+    e.state.doc.descendants((node) => {
+      if (node.type.name === "inlineImage") found = true;
+    });
+    expect(found).toBe(false);
+    expect(e.getText()).toContain("Before");
+  });
+
   it("keeps images and dividers outside card mode", () => {
     const e = make(false);
     e.chain()
@@ -83,5 +104,17 @@ describe("MSTeamsCardTextOnly", () => {
       .run();
 
     expect(types(e)).toEqual(expect.arrayContaining(["imageBlock", "divider"]));
+  });
+
+  it("keeps the caret in the unwrapped quote, so typing goes on in it", () => {
+    const e = make(true);
+    e.commands.setContent("<p>Start</p><p>Next</p>");
+    e.commands.setTextSelection(6);
+    e.commands.toggleBlockquote();
+    e.commands.insertContent(" typed");
+
+    expect(e.getText()).toContain("Start typed");
+    expect(e.getText()).toContain("Next");
+    expect(types(e).every((name) => name === "paragraph")).toBe(true);
   });
 });

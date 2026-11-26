@@ -1,4 +1,5 @@
 import { MSTeamsCardTextOnly } from "./msteamsCardTextOnly";
+import { MSTeamsButtonLabelLock } from "./msteamsButtonLabelLock";
 import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -638,6 +639,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             layoutTrailingDrop: true,
           }),
           MSTeamsCardTextOnly,
+          // A button's label is edited in its sidebar form only.
+          MSTeamsButtonLabelLock,
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [
