@@ -2454,6 +2454,20 @@
 
 }
 
+/* A card button must open a link, so the send leaves one without it out: its border turns
+ * dotted, in the issue gutter's warning tone, next to the warning pill on its line. */
+[data-msteams-format="adaptive_card"]
+  .courier-msteams-editor
+  .ProseMirror
+  > .react-renderer.node-button
+  [data-node-type="button"][data-has-link="false"]
+  .node-element
+  > [class~="courier-flex"]
+  > div {
+  border-style: dotted !important;
+  border-color: #d97706 !important;
+}
+
 /* Teams shows 6 buttons and puts the rest under a "…" menu (MSTeamsButtonOverflow): hide
  * those here, and leave room after the 6th for the chip (40px wide, 8px either side). */
 [data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror {

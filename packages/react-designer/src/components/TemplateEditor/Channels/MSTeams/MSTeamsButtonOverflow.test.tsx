@@ -22,13 +22,22 @@ const ButtonNode = Node.create({
 const content = (labels: string[]) =>
   `<p>Hi</p>${labels.map((l) => `<button-node id="${l}">${l}</button-node>`).join("")}`;
 
-const Harness = ({ labels, readOnly }: { labels: string[]; readOnly?: boolean }) => {
+const Harness = ({
+  labels,
+  readOnly,
+  editable = true,
+}: {
+  labels: string[];
+  readOnly?: boolean;
+  editable?: boolean;
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div ref={ref}>
       <EditorProvider
         content={content(labels)}
         extensions={[Document, Paragraph, Text, ButtonNode]}
+        editable={editable}
         immediatelyRender
       >
         <MSTeamsButtonOverflow containerRef={ref} readOnly={readOnly} />
@@ -37,12 +46,12 @@ const Harness = ({ labels, readOnly }: { labels: string[]; readOnly?: boolean })
   );
 };
 
-const mount = async (labels: string[], readOnly?: boolean) => {
+const mount = async (labels: string[], readOnly?: boolean, editable?: boolean) => {
   const store = createStore();
   await act(async () => {
     render(
       <Provider store={store}>
-        <Harness labels={labels} readOnly={readOnly} />
+        <Harness labels={labels} readOnly={readOnly} editable={editable} />
       </Provider>
     );
   });
@@ -89,5 +98,16 @@ describe("MSTeamsButtonOverflow", () => {
 
     expect(store.get(selectedNodeAtom)).toBeFalsy();
     expect(screen.queryByRole("button", { name: "Duplicate" })).toBeNull();
+  });
+
+  it("is read-only in an editor that isn't editable, even without the readOnly prop", async () => {
+    const store = await mount(["A", "B", "C", "D", "E", "F", "G"], undefined, false);
+
+    fireEvent.click(screen.getByRole("button", { name: "1 more buttons" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "G" }));
+
+    expect(store.get(selectedNodeAtom)).toBeFalsy();
+    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+    expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual(["G"]);
   });
 });

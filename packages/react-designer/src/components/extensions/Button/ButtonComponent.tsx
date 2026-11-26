@@ -1,9 +1,10 @@
 import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useState } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
+import { channelAtom } from "@/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import {
@@ -181,6 +182,8 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
 
   const isPreviewMode = !isEditable;
   const link = props.node.attrs.link as string | undefined;
+  // A Teams button's label is edited in its sidebar form, not on the button.
+  const isLabelReadOnly = useAtomValue(channelAtom) === "msteams";
 
   return (
     <SortableItemWrapper
@@ -189,13 +192,17 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
       onClick={handleSelect}
       editor={props.editor}
       data-node-type="button"
+      data-has-link={link?.trim() ? "true" : "false"}
     >
       <ButtonComponent
         {...(props.node.attrs as ButtonProps)}
         isPreviewMode={isPreviewMode}
         link={link}
       >
-        <NodeViewContent as="span" />
+        <NodeViewContent
+          as="span"
+          {...(isLabelReadOnly && { contentEditable: false, className: "courier-cursor-pointer" })}
+        />
       </ButtonComponent>
     </SortableItemWrapper>
   );

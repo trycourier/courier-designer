@@ -83,6 +83,8 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   // The send strips HTML comments today, so Outlook gets the non-Outlook branch; the
   // message still delivers everywhere.
   "outlook-conditional-stripped": "warning",
+  // The send leaves the button out of the card and delivers the rest.
+  "msteams-button-no-link": "warning",
 };
 
 export function severityForCode(code: HandlebarsIssueCode): TemplateIssueSeverity {
@@ -453,6 +455,28 @@ function walkElement(
   }
 }
 
+/** A Teams Adaptive card button must open a URL; the send leaves one without a link out. */
+function linklessCardButtonIssues(children: unknown[], channel: string): TemplateIssue[] {
+  return children.flatMap((child, index) => {
+    const node = child as { type?: string; href?: unknown } | null;
+    if (node?.type !== "action" || (typeof node.href === "string" && node.href.trim())) {
+      return [];
+    }
+    return [
+      {
+        severity: severityForCode("msteams-button-no-link"),
+        code: "msteams-button-no-link" as const,
+        message: "Add a link to this button. Teams only shows buttons that open a link.",
+        channel,
+        field: "href",
+        elementIndex: index,
+        raw: "",
+        occurrence: 0,
+      },
+    ];
+  });
+}
+
 /**
  * Every handlebars issue in a whole template, across every channel.
  *
@@ -485,6 +509,9 @@ export function collectTemplateIssues(
       children.forEach((child, index) =>
         walkElement(child, channel, index, out, undefined, options)
       );
+      if (channel === "msteams" && record.message_format === "adaptive_card") {
+        out.push(...linklessCardButtonIssues(children, channel));
+      }
       continue;
     }
 

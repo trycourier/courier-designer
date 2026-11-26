@@ -17,7 +17,7 @@ export type MSTeamsFormat = "text" | "adaptive_card";
 /** Blocks each format can't show, by sidebar block type. */
 export const MSTEAMS_UNSUPPORTED_BLOCKS: Record<MSTeamsFormat, string[]> = {
   text: ["button"],
-  adaptive_card: ["divider"],
+  adaptive_card: ["divider", "image"],
 };
 
 const HEADING_STYLES = new Set(["h1", "h2", "h3"]);
@@ -36,7 +36,10 @@ export const getMSTeamsFormatBlockers = (
   const visit = (nodes: ElementalNode[] | undefined) => {
     nodes?.forEach((node) => {
       if (node.type === "action" && node.style !== "link") hasButton = true;
-      if (node.type === "divider" || node.type === "quote") hasCardUnsupported = true;
+      // The send rejects these in a card (backend#10662), images included.
+      if (node.type === "divider" || node.type === "quote" || node.type === "image") {
+        hasCardUnsupported = true;
+      }
       if (node.type === "text" && node.text_style && HEADING_STYLES.has(node.text_style)) {
         hasCardUnsupported = true;
       }
@@ -47,7 +50,7 @@ export const getMSTeamsFormatBlockers = (
   return {
     text: hasButton ? "Remove the buttons first: a Text message can't show buttons." : null,
     adaptive_card: hasCardUnsupported
-      ? "Remove dividers, quotes and headings first: an Adaptive card can't show them."
+      ? "Remove images, dividers, quotes and headings first: an Adaptive card can't show them."
       : null,
   };
 };

@@ -36,8 +36,9 @@ describe("getMSTeamsFormatBlockers", () => {
     expect(blockers.text).toBeNull();
   });
 
-  it("blocks Adaptive card while there are dividers, quotes or headings", () => {
+  it("blocks Adaptive card while there are images, dividers, quotes or headings", () => {
     for (const node of [
+      { type: "image", src: "https://x.test/a.png" },
       { type: "divider" },
       { type: "quote", content: "q" },
       { type: "text", content: "H", text_style: "h1" },
