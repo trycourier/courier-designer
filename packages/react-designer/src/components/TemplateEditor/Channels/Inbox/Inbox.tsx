@@ -1,6 +1,7 @@
 import { PREVIEW_TITLE_KEY } from "@/lib/utils/handlebars/renderElementalPreview";
 import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { MarkdownPreview } from "@/components/extensions/MarkdownPreview";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
@@ -307,6 +308,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             disableVariablesAutocomplete,
             textMarks: "plain-text", // In-App doesn't support rich text formatting
           }),
+          MarkdownPreview,
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, variables, disableVariablesAutocomplete]
     );

@@ -273,7 +273,7 @@ describe("Inbox Component", () => {
       expect(screen.getByTestId("custom-content")).toBeInTheDocument();
       expect(mockRender).toHaveBeenCalledWith({
         content: { type: "doc", content: [] },
-        extensions: [],
+        extensions: [expect.objectContaining({ name: "markdownPreview" })],
         editable: true,
         autofocus: false,
         onUpdate: expect.any(Function),
