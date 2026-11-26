@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { Editor } from "@tiptap/core";
+import { Editor, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { MSTeamsCardTextOnly } from "./msteamsCardTextOnly";
 
@@ -9,9 +9,24 @@ afterEach(() => {
   editor = undefined;
 });
 
+// Stand-ins for the designer's image and divider blocks, which StarterKit lacks.
+const leaf = (name: string, tag: string) =>
+  Node.create({
+    name,
+    group: "block",
+    atom: true,
+    parseHTML: () => [{ tag }],
+    renderHTML: () => [tag],
+  });
+
 const make = (enabled: boolean) => {
   editor = new Editor({
-    extensions: [StarterKit, MSTeamsCardTextOnly.configure({ enabled })],
+    extensions: [
+      StarterKit,
+      leaf("imageBlock", "image-block"),
+      leaf("divider", "divider-block"),
+      MSTeamsCardTextOnly.configure({ enabled }),
+    ],
     content: "<p>Start</p>",
   });
   return editor;
@@ -46,5 +61,27 @@ describe("MSTeamsCardTextOnly", () => {
       .run();
 
     expect(types(e)).toEqual(expect.arrayContaining(["blockquote", "heading"]));
+  });
+
+  it("drops images and dividers in card mode (a dropped image file, the --- input rule)", () => {
+    const e = make(true);
+    e.chain()
+      .focus("end")
+      .insertContent("<image-block></image-block><divider-block></divider-block><p>After</p>")
+      .run();
+
+    expect(types(e)).not.toContain("imageBlock");
+    expect(types(e)).not.toContain("divider");
+    expect(e.getText()).toContain("After");
+  });
+
+  it("keeps images and dividers outside card mode", () => {
+    const e = make(false);
+    e.chain()
+      .focus("end")
+      .insertContent("<image-block></image-block><divider-block></divider-block>")
+      .run();
+
+    expect(types(e)).toEqual(expect.arrayContaining(["imageBlock", "divider"]));
   });
 });

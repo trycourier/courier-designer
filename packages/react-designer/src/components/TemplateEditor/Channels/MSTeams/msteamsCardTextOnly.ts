@@ -9,10 +9,13 @@ export interface MSTeamsCardTextOnlyOptions {
 
 export const MSTeamsCardTextOnlyPluginKey = new PluginKey("msteamsCardTextOnly");
 
+const CARD_UNSUPPORTED_NODES = new Set(["heading", "blockquote", "imageBlock", "divider"]);
+
 /**
- * An Adaptive card's text block shows no quotes or headings (the send rejects a quote),
- * and the menu isn't the only way in: `> ` and `# ` input rules and Mod-Shift-b make them
- * too. In card mode any that appear become plain paragraphs.
+ * An Adaptive card's text block shows no quotes, headings, images or dividers (the send
+ * rejects the last three and a quote), and the menu and paste rules aren't the only way
+ * in: `> `, `# ` and `---` input rules, Mod-Shift-b, and a dropped or pasted image file.
+ * In card mode quotes and headings become plain paragraphs, and images and dividers go.
  */
 export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>({
   name: "msteamsCardTextOnly",
@@ -34,7 +37,7 @@ export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>(
 
           const found: { node: ProseMirrorNode; pos: number }[] = [];
           state.doc.descendants((node, pos) => {
-            if (node.type.name === "heading" || node.type.name === "blockquote") {
+            if (CARD_UNSUPPORTED_NODES.has(node.type.name)) {
               found.push({ node, pos });
               return false;
             }
@@ -45,7 +48,9 @@ export const MSTeamsCardTextOnly = Extension.create<MSTeamsCardTextOnlyOptions>(
           const tr = state.tr;
           // Last first, so earlier positions stay valid.
           for (const { node, pos } of found.reverse()) {
-            if (node.type.name === "heading") {
+            if (node.type.name === "imageBlock" || node.type.name === "divider") {
+              tr.delete(pos, pos + node.nodeSize);
+            } else if (node.type.name === "heading") {
               const attrs = Object.fromEntries(
                 Object.keys(paragraph.spec.attrs ?? {})
                   .filter((key) => key in node.attrs)

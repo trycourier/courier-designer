@@ -59,7 +59,12 @@ export const MSTeamsSideBarItemDetails = ({
   if (element.type.name === "button") {
     return (
       <div className="courier-flex courier-flex-col courier-gap-4">
-        <SlackButtonForm element={element} editor={editor} key={element.attrs.id} />
+        <SlackButtonForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          showLinkTracking
+        />
       </div>
     );
   }
