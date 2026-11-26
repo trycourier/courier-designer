@@ -100,14 +100,15 @@ describe("MSTeamsButtonOverflow", () => {
     expect(screen.queryByRole("button", { name: "Duplicate" })).toBeNull();
   });
 
-  it("is read-only in an editor that isn't editable, even without the readOnly prop", async () => {
+  it("stays usable while the editor is briefly not editable (a drag turns that off)", async () => {
     const store = await mount(["A", "B", "C", "D", "E", "F", "G"], undefined, false);
 
     fireEvent.click(screen.getByRole("button", { name: "1 more buttons" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "G" }));
 
-    expect(store.get(selectedNodeAtom)).toBeFalsy();
-    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
-    expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual(["G"]);
+    // Read-only comes from the host (`readOnly`, or `editable: false` mapped by
+    // MSTeamsEditor), never from the editor's own editable state.
+    expect(store.get(selectedNodeAtom)?.attrs.id).toBe("G");
+    expect(screen.getAllByRole("button", { name: "Delete" })).toHaveLength(1);
   });
 });

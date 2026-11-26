@@ -174,13 +174,15 @@ export const MSTeamsButtonOverflow = ({
   readOnly?: boolean;
 }) => {
   const { editor } = useCurrentEditor();
-  // A host can pass `editable: false` without `readOnly` (the built-in layout does).
-  const isReadOnly = readOnly || !editor?.isEditable;
+  const isReadOnly = readOnly;
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const [buttons, setButtons] = useState<ButtonEntry[]>([]);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  // Where the menu opened for a drag: it stays there while the ghost reflows the row and
+  // moves the chip, or it would slide under the pointer, take the drop and move back.
+  const [menuAnchor, setMenuAnchor] = useState<{ left: number; top: number } | null>(null);
   const [isAddingButton, setIsAddingButton] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
   // The dragged button, and where in the menu it would land.
@@ -191,7 +193,9 @@ export const MSTeamsButtonOverflow = ({
   const [menuDrop, setMenuDrop] = useState<number | null>(null);
   const chipRef = useRef<HTMLDivElement>(null);
   const chipButtonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  // State, not a ref: the drop target registers when the menu actually mounts, which a
+  // drag-opened menu does a render after `isOpen` flips (the chip measures first).
+  const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null);
   const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const overflow = buttons.slice(MSTEAMS_VISIBLE_BUTTONS);
@@ -231,6 +235,10 @@ export const MSTeamsButtonOverflow = ({
     setPosition({ left: rect.right - box.left + 8, top: rect.top - box.top + 4 });
   }, [editor, containerRef, lastShown, isShown]);
 
+  useEffect(() => {
+    if (drag && position && !menuAnchor) setMenuAnchor(position);
+  }, [drag, position, menuAnchor]);
+
   const measureRef = useRef(measure);
   measureRef.current = measure;
 
@@ -251,6 +259,8 @@ export const MSTeamsButtonOverflow = ({
           setIsAddingButton(source.data.type === "sidebar");
           const id = currentSourceId(editor, source.data);
           setDrag({ data: source.data, label: draggedBlockLabel(editor, source.data) });
+          // Open for every button drag, so a button can go under "…" without hunting for it.
+          setIsOpen(true);
           // A new button, or one from under "…", dropped into a full row pushes the 6th
           // under "…"; the row's CSS previews that.
           const current = editor ? topLevelButtons(editor.state.doc) : [];
@@ -275,6 +285,7 @@ export const MSTeamsButtonOverflow = ({
           setIsAddingButton(false);
           setDrag(null);
           setMenuDrop(null);
+          setMenuAnchor(null);
           // Reordered inside the menu, it stays open on the result.
           if (location.current.dropTargets[0]?.data.id !== "msteams-button-overflow-menu") {
             setIsOpen(false);
@@ -321,7 +332,7 @@ export const MSTeamsButtonOverflow = ({
   // The menu takes a drop at a place in its list. The place comes from the list as it is
   // without the placeholder, so the placeholder moving the items can't move the drop.
   useEffect(() => {
-    const element = menuRef.current;
+    const element = menuElement;
     if (!element || !editor || isReadOnly) return;
     const placeAt = (sourceId: unknown, y: number) => {
       const list = menuListWithout(editor.state.doc, sourceId);
@@ -352,7 +363,7 @@ export const MSTeamsButtonOverflow = ({
       onDragLeave: () => setMenuDrop(null),
       onDrop: () => setMenuDrop(null),
     });
-  }, [editor, isOpen, isReadOnly]);
+  }, [editor, menuElement, isReadOnly]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -430,7 +441,18 @@ export const MSTeamsButtonOverflow = ({
         …
       </button>
       {isOpen && (
-        <div ref={menuRef} role="menu" className="courier-msteams-button-overflow-menu">
+        <div
+          ref={setMenuElement}
+          role="menu"
+          className="courier-msteams-button-overflow-menu"
+          style={
+            menuAnchor
+              ? {
+                  transform: `translate(${menuAnchor.left - position.left}px, ${menuAnchor.top - position.top}px)`,
+                }
+              : undefined
+          }
+        >
           {overflow.map((entry) => (
             <span key={entry.node.attrs.id ?? entry.pos} className="courier-contents">
               {placeholderBefore !== undefined &&

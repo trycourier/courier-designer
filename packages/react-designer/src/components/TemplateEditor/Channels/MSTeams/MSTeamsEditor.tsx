@@ -232,7 +232,12 @@ export const MSTeamsEditor = ({
             </>
           )}
           {format === "adaptive_card" && (
-            <MSTeamsButtonOverflow containerRef={editorContainerRef} readOnly={readOnly} />
+            <MSTeamsButtonOverflow
+              containerRef={editorContainerRef}
+              // A host can pass `editable: false` without `readOnly` (the built-in layout
+              // does). Not `editor.isEditable`: a drag turns that off while it runs.
+              readOnly={readOnly || !editable}
+            />
           )}
         </EditorProvider>
       </div>
