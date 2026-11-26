@@ -174,6 +174,8 @@ export const MSTeamsButtonOverflow = ({
   readOnly?: boolean;
 }) => {
   const { editor } = useCurrentEditor();
+  // A host can pass `editable: false` without `readOnly` (the built-in layout does).
+  const isReadOnly = readOnly || !editor?.isEditable;
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const [buttons, setButtons] = useState<ButtonEntry[]>([]);
@@ -285,7 +287,7 @@ export const MSTeamsButtonOverflow = ({
 
   useEffect(() => {
     const element = chipButtonRef.current;
-    if (!element || !editor || readOnly) return;
+    if (!element || !editor || isReadOnly) return;
     return dropTargetForElements({
       element,
       // Only at its place in the row as laid out without the ghost: the ghost moves the
@@ -314,13 +316,13 @@ export const MSTeamsButtonOverflow = ({
       },
       onDrop: () => setIsDropTarget(false),
     });
-  }, [editor, position, readOnly]);
+  }, [editor, position, isReadOnly]);
 
   // The menu takes a drop at a place in its list. The place comes from the list as it is
   // without the placeholder, so the placeholder moving the items can't move the drop.
   useEffect(() => {
     const element = menuRef.current;
-    if (!element || !editor || readOnly) return;
+    if (!element || !editor || isReadOnly) return;
     const placeAt = (sourceId: unknown, y: number) => {
       const list = menuListWithout(editor.state.doc, sourceId);
       const index = menuDropIndex(element, y, list.length);
@@ -350,7 +352,7 @@ export const MSTeamsButtonOverflow = ({
       onDragLeave: () => setMenuDrop(null),
       onDrop: () => setMenuDrop(null),
     });
-  }, [editor, isOpen, readOnly]);
+  }, [editor, isOpen, isReadOnly]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -372,7 +374,7 @@ export const MSTeamsButtonOverflow = ({
 
   const duplicate = (entry: ButtonEntry) => {
     const current = currentEntry(entry);
-    if (!editor || !current) return;
+    if (!editor || !current || isReadOnly) return;
     const { id: _id, ...attrs } = current.node.attrs;
     createOrDuplicateNode(
       editor,
@@ -386,7 +388,7 @@ export const MSTeamsButtonOverflow = ({
 
   const remove = (entry: ButtonEntry) => {
     const current = currentEntry(entry);
-    if (!editor || !current) return;
+    if (!editor || !current || isReadOnly) return;
     setSelectedNode(null);
     editor.view.dispatch(editor.state.tr.delete(current.pos, current.pos + current.node.nodeSize));
   };
@@ -442,7 +444,7 @@ export const MSTeamsButtonOverflow = ({
                 onSelect={() => setSelectedNode(entry.node)}
                 onDuplicate={() => duplicate(entry)}
                 onDelete={() => remove(entry)}
-                readOnly={readOnly}
+                readOnly={isReadOnly}
               />
             </span>
           ))}

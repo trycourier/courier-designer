@@ -1,3 +1,4 @@
+import { MSTeamsCardTextOnly } from "./msteamsCardTextOnly";
 import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -444,10 +445,14 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
         (e) => e.name === MessagingChannelPaste.name
       );
       if (paste) {
-        paste.options.blockedNodeTypes = isCard ? ["divider"] : ["button"];
+        paste.options.blockedNodeTypes = isCard ? ["divider", "imageBlock"] : ["button"];
         paste.options.unwrapNodeTypes = isCard ? ["blockquote"] : [];
       }
       setTrailingTypes(templateEditor, isCard ? ["button"] : null);
+      const textOnly = templateEditor.extensionManager?.extensions.find(
+        (e) => e.name === MSTeamsCardTextOnly.name
+      );
+      if (textOnly) textOnly.options.enabled = isCard;
     }, [templateEditor, format]);
 
     // Filter visible blocks to only include supported types for MSTeams
@@ -632,6 +637,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             wholeDragTypes: ["button"],
             layoutTrailingDrop: true,
           }),
+          MSTeamsCardTextOnly,
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [

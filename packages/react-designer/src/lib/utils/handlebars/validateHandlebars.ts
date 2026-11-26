@@ -50,7 +50,12 @@ export type HandlebarsIssueCode =
    * Not handlebars: an HTML block holds an Outlook conditional comment, which the
    * send's sanitizer currently removes (C-21354). The email still delivers.
    */
-  | "outlook-conditional-stripped";
+  | "outlook-conditional-stripped"
+  /**
+   * Not handlebars: a Teams Adaptive card button with no link. A card button has to
+   * open a URL, so the send leaves it out of the card. The message still delivers.
+   */
+  | "msteams-button-no-link";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;
