@@ -1,10 +1,9 @@
 import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useState } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
-import { channelAtom } from "@/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import {
@@ -182,8 +181,14 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
 
   const isPreviewMode = !isEditable;
   const link = props.node.attrs.link as string | undefined;
-  // A Teams button's label is edited in its sidebar form, not on the button.
-  const isLabelReadOnly = useAtomValue(channelAtom) === "msteams";
+  // A Teams button's label is edited in its sidebar form, not on the button: the Teams
+  // editor installs the label lock. Read off the editor rather than importing the store,
+  // which closes an import cycle (it hung TextBlock's test suite).
+  const isLabelReadOnly = Boolean(
+    props.editor.extensionManager?.extensions.some(
+      (extension) => extension.name === "msteamsButtonLabelLock"
+    )
+  );
 
   return (
     <SortableItemWrapper
