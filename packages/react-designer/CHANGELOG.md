@@ -1,5 +1,31 @@
 # @trycourier/react-designer
 
+## 0.12.0
+
+### Minor Changes
+
+- f94846c: WhatsApp authentication templates: `TemplateEditor` takes `whatsappAuthentication` (settings and `onChange`), and then shows WhatsApp's own message read-only in the phone with its options (security sentence, code expiry, message lifetime) in the sidebar.
+- d2b1124: Add the Jsonnet block to the MS Teams channel, matching Slack's, and offer it on both channels unconditionally.
+
+  `TemplateProvider`'s `slackJsonnetEnabled` prop is removed: the Jsonnet block is now always in the Slack and MS Teams sidebars. Hosts that passed it should drop the prop. On Teams the starter dropdown and the inserted default are Adaptive Card templates, since the backend only sends a top-level `type: "AdaptiveCard"` object and the Slack Block Kit starters would render nothing there.
+
+  Also raises the `handlebars` floor to `^4.7.10`, matching the security patch hosts already apply.
+
+- a616c16: Export `WhatsappPreview`: a WhatsApp message drawn read-only in the editor's phone from its `whatsapp` channel elements, for hosts that show a sent message outside the editor.
+
+### Patch Changes
+
+- 9188bb6: Keep the In-app editor from opening blank when its heading or body contains markdown (`**bold**`, `_italic_`, …). The markers now stay as literal text, as they already do for SMS and Push, instead of becoming marks the In-app editor's schema rejects.
+
+  The In-app editor and its preview also render that markdown the way the Inbox does: bold, italic and strikethrough are shown formatted, and the markers appear only while the caret is on the span. The stored text is unchanged.
+
+- bacb128: The List loop's Data path no longer flags valid `profile.*`, `refs.*` and `$.item` sources as "Path must start with data." — Studio now accepts every root the send renderer evaluates. The sample-data "Path not found" / "non-array value" warning is also dropped from the sidebar; that data-dependent check belongs in Preview & Test, not the design surface.
+
+  A blocking loop error now pins to its block on the canvas instead of only counting in the host's "errors blocking publish" list: `loop` and `if` issues gain a canvas home, and a plain-path loop whose root the send never provides (e.g. `info.items`) is now a blocking template issue, matching the sidebar's red state.
+
+- 0f25ae6: Upgrade to Zod 4.6.6 or later and migrate Elemental and editor form validation to the Zod 4 API.
+- eee0a86: The WhatsApp header image picker takes only JPEG and PNG, which is all Meta accepts for an image header. A dropped or chosen file of any other type is refused with "WhatsApp header images must be JPEG or PNG." instead of being ignored or uploaded. `ImageBlockComponent` gains optional `allowedTypes` and `onFileRejected` props; the email image block keeps the types it accepts.
+
 ## 0.11.0
 
 ### Minor Changes
