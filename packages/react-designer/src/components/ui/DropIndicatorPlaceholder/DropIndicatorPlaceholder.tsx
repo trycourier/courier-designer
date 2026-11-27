@@ -4,6 +4,10 @@ import { blockPresetsAtom } from "@/components/TemplateEditor/store";
 
 interface DropIndicatorPlaceholderProps {
   type?: string | null;
+  /** Drawn beside a block in a row (MS Teams buttons) instead of above or below it. */
+  inline?: "before" | "after";
+  /** Text of the block being moved; an inline ghost shows it instead of the type name. */
+  label?: string | null;
 }
 
 /**
@@ -41,7 +45,11 @@ const parsePresetType = (type: string): { blockType: string; presetKey: string }
   return null;
 };
 
-export const DropIndicatorPlaceholder: React.FC<DropIndicatorPlaceholderProps> = ({ type }) => {
+export const DropIndicatorPlaceholder: React.FC<DropIndicatorPlaceholderProps> = ({
+  type,
+  inline,
+  label,
+}) => {
   const presets = useAtomValue(blockPresetsAtom);
 
   const getPlaceholderLabel = (type?: string | null): string => {
@@ -67,6 +75,15 @@ export const DropIndicatorPlaceholder: React.FC<DropIndicatorPlaceholderProps> =
     // Built-in block type
     return BLOCK_LABELS[type] || "Drop here";
   };
+
+  if (inline) {
+    // Sized like the button it stands for by the channel's `.courier-inline-drop-ghost` rule.
+    return (
+      <div className="courier-inline-drop-ghost courier-pointer-events-none" data-inline={inline}>
+        {label || getPlaceholderLabel(type)}
+      </div>
+    );
+  }
 
   return (
     <div className="courier-flex courier-w-full courier-pointer-events-none">

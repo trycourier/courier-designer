@@ -187,7 +187,12 @@ describe("Whatsapp content stability", () => {
     mount();
 
     const rules = props!.extensions.find((extension) => extension.name === "dropRules");
-    expect(rules?.options).toEqual({ fixedFirstBlock: true, sidebarTypes: ["text", "list"] });
+    expect(rules?.options).toEqual({
+      fixedFirstBlock: true,
+      sidebarTypes: ["text", "list"],
+      trailingTypes: null,
+      wholeDragTypes: null,
+    });
   });
 
   it("passes the saved header and buttons to the canvas", () => {

@@ -1,5 +1,15 @@
 import { Divider } from "@/components/ui-kit";
-import { acceptsSidebarBlock, getDropRules } from "@/components/extensions/DropRules";
+import {
+  acceptsSidebarBlock,
+  getDropRules,
+  currentSourceId,
+  draggedBlockLabel,
+  getLastTrailingTarget,
+  isTrailingType,
+  isWholeDragType,
+  setLastTrailingTarget,
+  subscribeLastTrailingTarget,
+} from "@/components/extensions/DropRules";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
 import type { Node } from "@tiptap/pm/model";
@@ -20,6 +30,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
+  monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   attachClosestEdge,
@@ -70,9 +81,56 @@ export const SortableItemWrapper = ({
   const handleRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // The dragged block's text, shown in an inline drop ghost so the row reads as reordered.
+  const [dragLabel, setDragLabel] = useState<string | null>(null);
+  // A dragged whole-drag block leaves its slot only while another block is the target, so
+  // moving back off the others brings its slot back to drop it where it was.
+  const [isMovedAway, setIsMovedAway] = useState(false);
+
+  useEffect(() => {
+    if (!editor) return;
+    return monitorForElements({
+      canMonitor: ({ source }) => currentSourceId(editor, source.data) === id,
+      onDrag: ({ location }) => {
+        const target = location.current.dropTargets[0]?.data as
+          | { id?: string; nodeType?: string; outOfRow?: boolean }
+          | undefined;
+        const kept = getLastTrailingTarget();
+        setIsMovedAway(
+          (!!target &&
+            target.id !== id &&
+            (isWholeDragType(editor, target.nodeType) || !!target.outOfRow)) ||
+            (!!kept && kept.id !== id)
+        );
+      },
+      onDrop: () => setIsMovedAway(false),
+    });
+  }, [editor, id]);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
+
+  // A trailing-row drag draws its ghost on the block the shared target names. It stays
+  // across a gap in the row (see getLastTrailingTarget) and goes once the drag moves on.
+  useEffect(
+    () =>
+      subscribeLastTrailingTarget(() => {
+        const target = getLastTrailingTarget();
+        const edge = target?.id === id ? target.edge : null;
+        const shown = lastEdgeRef.current;
+        if (!edge && shown !== "left" && shown !== "right") return;
+        if (edge && target) {
+          setDragType(target.dragType);
+          setDragLabel(target.label);
+        }
+        if (edge !== shown) {
+          lastEdgeRef.current = edge;
+          setClosestEdge(edge);
+          if (!edge) setDragType(null);
+        }
+      }),
+    [id]
+  );
   const bottomEdgeStableRef = useRef<boolean>(false);
   const bottomEdgeClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastMouseYRef = useRef<number | null>(null);
@@ -151,11 +209,36 @@ export const SortableItemWrapper = ({
     // due to pragmatic-drag-and-drop's internal handle validation
     const isInShadowDom = element.getRootNode() instanceof ShadowRoot;
 
+    // A trailing-row drag (Teams buttons) shows its indicator beside this block, or not at
+    // all; the top/bottom stability rules below are for vertical drops only.
+    const applyTrailingEdge = (
+      selfData: Record<string | symbol, unknown>,
+      sourceData: Record<string | symbol, unknown>
+    ): boolean => {
+      const sourceDragType = (sourceData as { dragType?: string }).dragType;
+      if (!isTrailingType(editor, sourceDragType)) return false;
+      if (getDropRules(editor)?.layoutTrailingDrop) return true;
+      const edge = sourceData.id === id ? null : extractClosestEdge(selfData);
+      if (edge !== "left" && edge !== "right") {
+        setLastTrailingTarget(null);
+        return true;
+      }
+      // A drag from outside the row (the Teams "…" menu) brings its label along.
+      const label = draggedBlockLabel(editor, sourceData);
+      // The block that draws the ghost picks it up from the shared target (see below).
+      setLastTrailingTarget({ id, edge, dragType: sourceDragType ?? null, label });
+      return true;
+    };
+
     const cleanup = combine(
       draggable({
         element,
         // Disable drag handle in Shadow DOM contexts (it doesn't work due to event re-targeting)
-        dragHandle: isInShadowDom ? undefined : handle || undefined,
+        // A whole-drag block (Teams button) has no grip: the block itself is the source.
+        dragHandle:
+          isInShadowDom || isWholeDragType(editor, findNodeInfo()?.node.type.name)
+            ? undefined
+            : handle || undefined,
         canDrag: () => !isFixedFirstElement(),
         getInitialData: () => {
           const info = findNodeInfo();
@@ -267,7 +350,7 @@ export const SortableItemWrapper = ({
       }),
       dropTargetForElements({
         element,
-        getData: ({ input, element: targetElement }) => {
+        getData: ({ input, element: targetElement, source }) => {
           const info = findNodeInfo();
           const isRoot = info?.parent === editor.state.doc;
           const parentIsColumnCell = info?.parent?.type.name === "columnCell";
@@ -351,6 +434,20 @@ export const SortableItemWrapper = ({
             // generic edge logic below.
           }
 
+          // A trailing-row block (Teams buttons) dropped on another one lands beside it.
+          if (
+            isTrailingType(editor, (source?.data as { dragType?: string } | undefined)?.dragType) &&
+            isTrailingType(editor, data.nodeType)
+          ) {
+            // Left or right half of the hovered button, measured on the row as shown: a
+            // moved button leaves its slot while dragged, so the halves match the result.
+            return attachClosestEdge(data, {
+              input,
+              element: targetElement,
+              allowedEdges: ["left", "right"],
+            });
+          }
+
           // Check if this element is INSIDE a column cell
           // If so, we want to enable edge detection relative to THIS element for local reordering
           // But we need to make sure it doesn't conflict with main editor reordering
@@ -414,10 +511,21 @@ export const SortableItemWrapper = ({
             return false;
           }
 
-          // Only block the dragging element itself
-          // (edge-specific blocking is handled in onDragEnter/onDrag)
-          if (source.data.id === id) {
+          // A trailing-row block only lands beside its own kind; elsewhere the editor
+          // drop zone takes it to the end of the row.
+          if (
+            isTrailingType(editor, sourceDragType) &&
+            !isTrailingType(editor, findNodeInfo()?.node.type.name)
+          ) {
             return false;
+          }
+
+          // Only block the dragging element itself
+          // (edge-specific blocking is handled in onDragEnter/onDrag).
+          // A whole-drag block (Teams button) is its own target: dropping it back on its
+          // slot keeps it where it was.
+          if (source.data.id === id) {
+            return isWholeDragType(editor, findNodeInfo()?.node.type.name);
           }
 
           return true;
@@ -476,6 +584,8 @@ export const SortableItemWrapper = ({
             lastEdgeRef.current = null;
             return;
           }
+
+          if (applyTrailingEdge(self.data, source.data)) return;
 
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
@@ -620,6 +730,8 @@ export const SortableItemWrapper = ({
             return;
           }
 
+          if (applyTrailingEdge(self.data, source.data)) return;
+
           // Get real-time mouse position from the event
           const currentMouseY = location?.current?.input?.clientY ?? lastMouseYRef.current;
           if (currentMouseY !== null) {
@@ -709,7 +821,17 @@ export const SortableItemWrapper = ({
             setClosestEdge(newEdge);
           }
         },
-        onDragLeave: () => {
+        onDragLeave: ({ source, location }) => {
+          // A trailing-row ghost stays while the pointer crosses a gap in the row (see
+          // getLastTrailingTarget); another block or leaving the row clears it.
+          if (
+            isTrailingType(editor, (source.data as { dragType?: string }).dragType) &&
+            (getDropRules(editor)?.layoutTrailingDrop ||
+              (getLastTrailingTarget()?.id === id &&
+                location.current.dropTargets[0]?.data.id === "editor-drop-zone"))
+          ) {
+            return;
+          }
           // For the last element with stable bottom edge, don't clear immediately
           // This prevents flickering when mouse briefly leaves the element bounds
           // Use a timeout to clear if mouse doesn't return within a reasonable time
@@ -785,8 +907,10 @@ export const SortableItemWrapper = ({
       fadeIn={mountedWhileDragging}
       className={className}
       dragging={isDragging}
+      movedAway={isMovedAway}
       closestEdge={closestEdge}
       dragType={dragType}
+      dragLabel={dragLabel}
       handleRef={handleRef}
       contentRef={contentRef}
       editor={editor}
@@ -803,8 +927,11 @@ export interface SortableItemProps {
   dragOverlay?: boolean;
   disabled?: boolean;
   dragging?: boolean;
+  /** A dragged whole-drag block whose drop target is another block. */
+  movedAway?: boolean;
   closestEdge?: Edge | null;
   dragType?: string | null;
+  dragLabel?: string | null;
   handleRef?: React.RefObject<HTMLButtonElement>;
   contentRef?: React.RefObject<HTMLDivElement>;
   fadeIn?: boolean;
@@ -826,12 +953,13 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       contentRef,
       closestEdge,
       dragType,
+      dragLabel,
       id,
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fadeIn,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       dragging,
+      movedAway,
       ...props
     },
     ref
@@ -1071,7 +1199,15 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          "courier-flex courier-flex-col courier-relative draggable-item",
+          "courier-flex courier-relative draggable-item",
+          closestEdge === "left" || closestEdge === "right"
+            ? "courier-flex-row"
+            : "courier-flex-col",
+          // A dragged whole-drag block stays in its slot, dimmed, until another block is the
+          // target; then it leaves the slot and the ghost shows where it lands.
+          dragging &&
+            isWholeDragType(editor, node?.type.name) &&
+            (movedAway ? "courier-hidden" : "courier-opacity-40"),
           //  dragging && "is-dragging courier-opacity-50",
           className
         )}
@@ -1079,6 +1215,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       >
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
+        {closestEdge === "left" && (
+          <DropIndicatorPlaceholder type={dragType} label={dragLabel} inline="before" />
+        )}
 
         {/* `courier-pl-10` reserves the in-row strip the absolutely-positioned
             handle below sits on. Every channel needs it, and removing it here
@@ -1163,6 +1302,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
 
         {/* Bottom edge drag indicator */}
         {closestEdge === "bottom" && <DropIndicatorPlaceholder type={dragType} />}
+        {closestEdge === "right" && (
+          <DropIndicatorPlaceholder type={dragType} label={dragLabel} inline="after" />
+        )}
       </NodeViewWrapper>
     );
   }

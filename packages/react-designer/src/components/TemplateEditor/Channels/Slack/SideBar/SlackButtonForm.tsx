@@ -1,4 +1,15 @@
-import { Divider, Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui-kit";
+import {
+  Divider,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Switch,
+} from "@/components/ui-kit";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { useAtomValue } from "jotai";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -15,14 +26,21 @@ import {
   findButtonNodeAtPosition,
   updateButtonLabelAndContent,
 } from "@/components/extensions/Button/buttonUtils";
-import { setFormUpdating } from "@/components/TemplateEditor/store";
+import { linkTrackingEnabledAtom, setFormUpdating } from "@/components/TemplateEditor/store";
 
 interface SlackButtonFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  /** Show the link-tracking switch (Teams tracks its button links; Slack's form never had it). */
+  showLinkTracking?: boolean;
 }
 
-export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
+export const SlackButtonForm = ({
+  element,
+  editor,
+  showLinkTracking = false,
+}: SlackButtonFormProps) => {
+  const linkTrackingEnabled = useAtomValue(linkTrackingEnabledAtom);
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
@@ -166,6 +184,36 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
             </FormItem>
           )}
         />
+        {showLinkTracking && (
+          <div className="courier-mt-4">
+            <FormField
+              control={form.control}
+              name="disableTracking"
+              render={({ field }) => (
+                <Tooltip
+                  enabled={!linkTrackingEnabled}
+                  title="Click-through tracking is turned off for this workspace"
+                >
+                  <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
+                    <FormLabel className="!courier-m-0">Link tracking</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={linkTrackingEnabled ? !field.value : false}
+                        disabled={!linkTrackingEnabled}
+                        onCheckedChange={(checked) => {
+                          // Switch reflects "tracking enabled"; the stored attr is its inverse.
+                          field.onChange(!checked);
+                          updateNodeAttributes({ ...form.getValues(), disableTracking: !checked });
+                        }}
+                        className="!courier-m-0"
+                      />
+                    </FormControl>
+                  </FormItem>
+                </Tooltip>
+              )}
+            />
+          </div>
+        )}
       </form>
     </Form>
   );

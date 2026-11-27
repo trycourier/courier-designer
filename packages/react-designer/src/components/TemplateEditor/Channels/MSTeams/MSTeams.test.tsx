@@ -64,7 +64,8 @@ const mockSetSelectedNode = vi.fn();
 let mockSelectedNode: any = null;
 
 // Constant reference for visible blocks to prevent infinite re-renders
-const mockVisibleBlocks = ["text", "divider"];
+// "image" is not a Teams block, so it must be filtered out of the sidebar.
+const mockVisibleBlocks = ["text", "divider", "button", "image"];
 
 // Mock the store atoms directly
 vi.mock("@/components/TemplateEditor/store", () => ({
@@ -293,7 +294,7 @@ vi.mock("@/components/utils", () => ({
 
 // Import component after mocks
 import { MSTeams, defaultMSTeamsContent, getTextMenuConfigForMSTeamsNode } from "./MSTeams";
-import type { MSTeamsProps } from "./MSTeams";
+import type { MSTeamsProps, MSTeamsRenderProps } from "./MSTeams";
 
 // Test data
 const mockRouting = { method: "single" as const, channels: ["msteams"] };
@@ -359,6 +360,47 @@ describe("MSTeams Component", () => {
       expect(configWithoutSelection.alignLeft?.state).toBe("hidden");
       expect(configWithoutSelection.alignCenter?.state).toBe("hidden");
     });
+
+    it("should disable quote and headings in an Adaptive card, which can't show them", () => {
+      const card = getTextMenuConfigForMSTeamsNode("paragraph", false, "adaptive_card");
+      expect(card.quote?.state).toBe("disabled");
+      expect(card.quote?.reason).toMatch(/MS Teams channel settings/);
+      expect(card.contentType?.state).toBe("disabled");
+
+      const text = getTextMenuConfigForMSTeamsNode("paragraph", false, "text");
+      expect(text.quote?.state).toBe("enabled");
+      expect(text.contentType?.state).toBe("enabled");
+    });
+
+    it("should hide label formatting for buttons, since an Adaptive Card action title is plain text", () => {
+      const buttonConfig = getTextMenuConfigForMSTeamsNode("button", true);
+      expect(buttonConfig.bold?.state).toBe("hidden");
+      expect(buttonConfig.italic?.state).toBe("hidden");
+      expect(buttonConfig.underline?.state).toBe("hidden");
+      expect(buttonConfig.strike?.state).toBe("hidden");
+    });
+  });
+
+  describe("Buttons", () => {
+    it("should offer the Button block in the sidebar", () => {
+      const mockRender = vi.fn(() => <div>MSTeams Editor</div>);
+      render(<MSTeams {...defaultProps} render={mockRender} />);
+
+      const sidebar = (mockRender.mock.calls[0] as unknown as [MSTeamsRenderProps])[0].items
+        .Sidebar;
+      expect(sidebar).toContain("button");
+      expect(sidebar).not.toContain("image");
+    });
+
+    it("should configure paste handling, which the format then narrows", () => {
+      const mockRender = vi.fn(() => <div>MSTeams Editor</div>);
+      render(<MSTeams {...defaultProps} render={mockRender} />);
+
+      const { extensions } = (mockRender.mock.calls[0] as unknown as [MSTeamsRenderProps])[0];
+      const paste = extensions.find((e) => e.name === "messagingChannelPaste");
+      expect(paste).toBeDefined();
+      expect(paste?.options.blockedNodeTypes ?? []).not.toContain("button");
+    });
   });
 
   describe("Component Rendering", () => {
@@ -383,7 +425,7 @@ describe("MSTeams Component", () => {
           editable: true,
           autofocus: true,
           items: expect.objectContaining({
-            Sidebar: ["text", "divider", "jsonnet"],
+            Sidebar: ["text", "divider", "button", "jsonnet"],
           }),
         })
       );
@@ -495,7 +537,7 @@ describe("MSTeams Component", () => {
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
           items: expect.objectContaining({
-            Sidebar: ["text", "divider", "jsonnet"],
+            Sidebar: ["text", "divider", "button", "jsonnet"],
             Editor: expect.any(Array),
           }),
         })

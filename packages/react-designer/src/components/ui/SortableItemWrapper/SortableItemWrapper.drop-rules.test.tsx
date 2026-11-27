@@ -8,7 +8,11 @@ import { SortableItemWrapper } from "./SortableItemWrapper";
 
 interface DropConfig {
   canDrop: (args: { source: { data: Record<string, unknown> } }) => boolean;
-  getData: (args: { input: { clientY: number }; element: HTMLElement }) => {
+  getData: (args: {
+    input: { clientY: number };
+    element: HTMLElement;
+    source?: { data: Record<string, unknown> };
+  }) => {
     allowedEdges?: string[];
   };
 }
@@ -33,6 +37,7 @@ vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
     dropConfig = config;
     return () => {};
   }),
+  monitorForElements: vi.fn(() => () => {}),
 }));
 
 vi.mock("@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge", () => ({
@@ -54,10 +59,16 @@ vi.mock("@tiptap/react", () => ({
 }));
 
 /** A document of `count` paragraphs, the one with `id` at `index`, with these drop rules. */
-const editorWith = (id: string, index: number, rules?: Partial<DropRulesOptions>, count = 3) => {
+const editorWith = (
+  id: string,
+  index: number,
+  rules?: Partial<DropRulesOptions>,
+  count = 3,
+  nodeType = "paragraph"
+) => {
   const nodes = Array.from({ length: count }, (_, i) => ({
     attrs: { id: i === index ? id : `other-${i}` },
-    type: { name: "paragraph" },
+    type: { name: nodeType },
   }));
   const doc = {
     childCount: count,
@@ -83,10 +94,10 @@ const editorWith = (id: string, index: number, rules?: Partial<DropRulesOptions>
   } as unknown as Editor;
 };
 
-const mount = (rules?: Partial<DropRulesOptions>, index = 0) => {
+const mount = (rules?: Partial<DropRulesOptions>, index = 0, nodeType = "paragraph") => {
   render(
     <Provider store={createStore()}>
-      <SortableItemWrapper id="block-1" editor={editorWith("block-1", index, rules)}>
+      <SortableItemWrapper id="block-1" editor={editorWith("block-1", index, rules, 3, nodeType)}>
         <p>Block</p>
       </SortableItemWrapper>
     </Provider>
@@ -97,8 +108,12 @@ const mount = (rules?: Partial<DropRulesOptions>, index = 0) => {
 const sidebar = (dragType: string) => ({
   source: { data: { type: "sidebar", dragType, id: dragType } },
 });
-const edgesOf = (config: DropConfig) =>
-  config.getData({ input: { clientY: 0 }, element: document.body }).allowedEdges;
+const edgesOf = (config: DropConfig, dragType?: string) =>
+  config.getData({
+    input: { clientY: 0 },
+    element: document.body,
+    source: dragType ? sidebar(dragType).source : undefined,
+  }).allowedEdges;
 
 describe("SortableItemWrapper drop rules", () => {
   beforeEach(() => {
@@ -154,6 +169,68 @@ describe("SortableItemWrapper drop rules", () => {
       mount({ fixedFirstBlock: true }, 1);
 
       expect(dragConfig!.canDrag!()).toBe(true);
+    });
+  });
+
+  describe("trailingTypes (MS Teams buttons)", () => {
+    const rules = { trailingTypes: ["button"] };
+
+    it("refuses a button on any other block, so the editor drop zone ends the row with it", () => {
+      const config = mount(rules, 1, "paragraph");
+
+      expect(config.canDrop(sidebar("button"))).toBe(false);
+      expect(
+        config.canDrop({ source: { data: { type: "editor", dragType: "button", id: "x" } } })
+      ).toBe(false);
+    });
+
+    it("still takes other blocks on other blocks", () => {
+      expect(mount(rules, 1, "paragraph").canDrop(sidebar("text"))).toBe(true);
+    });
+
+    it("drops a button beside another button", () => {
+      const config = mount(rules, 1, "button");
+
+      expect(config.canDrop(sidebar("button"))).toBe(true);
+      expect(edgesOf(config, "button")).toEqual(["left", "right"]);
+    });
+
+    it("treats a button preset like a button", () => {
+      expect(mount(rules, 1, "paragraph").canDrop(sidebar("button:portal"))).toBe(false);
+      expect(edgesOf(mount(rules, 1, "button"), "button:portal")).toEqual(["left", "right"]);
+    });
+
+    it("refuses a block dropped on itself unless it drags whole", () => {
+      expect(
+        mount(rules, 1, "button").canDrop({
+          source: { data: { type: "editor", dragType: "button", id: "block-1", index: 1 } },
+        })
+      ).toBe(false);
+    });
+
+    it("takes a dragged button back on its own slot, to keep it in place", () => {
+      const config = mount({ ...rules, wholeDragTypes: ["button"] }, 1, "button");
+
+      expect(
+        config.canDrop({
+          source: { data: { type: "editor", dragType: "button", id: "block-1", index: 1 } },
+        })
+      ).toBe(true);
+    });
+
+    it("moves a button beside the hovered one, by the half under the pointer", () => {
+      const config = mount(rules, 1, "button");
+      const edges = config.getData({
+        input: { clientY: 0 },
+        element: document.body,
+        source: { data: { type: "editor", dragType: "button", id: "src", index: 0 } },
+      }).allowedEdges;
+
+      expect(edges).toEqual(["left", "right"]);
+    });
+
+    it("keeps the usual edges for other blocks dragged over a button", () => {
+      expect(edgesOf(mount(rules, 1, "button"), "text")).toEqual(["top"]);
     });
   });
 

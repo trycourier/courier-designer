@@ -181,6 +181,14 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
 
   const isPreviewMode = !isEditable;
   const link = props.node.attrs.link as string | undefined;
+  // A Teams button's label is edited in its sidebar form, not on the button: the Teams
+  // editor installs the label lock. Read off the editor rather than importing the store,
+  // which closes an import cycle (it hung TextBlock's test suite).
+  const isLabelReadOnly = Boolean(
+    props.editor.extensionManager?.extensions.some(
+      (extension) => extension.name === "msteamsButtonLabelLock"
+    )
+  );
 
   return (
     <SortableItemWrapper
@@ -189,13 +197,17 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
       onClick={handleSelect}
       editor={props.editor}
       data-node-type="button"
+      data-has-link={link?.trim() ? "true" : "false"}
     >
       <ButtonComponent
         {...(props.node.attrs as ButtonProps)}
         isPreviewMode={isPreviewMode}
         link={link}
       >
-        <NodeViewContent as="span" />
+        <NodeViewContent
+          as="span"
+          {...(isLabelReadOnly && { contentEditable: false, className: "courier-cursor-pointer" })}
+        />
       </ButtonComponent>
     </SortableItemWrapper>
   );

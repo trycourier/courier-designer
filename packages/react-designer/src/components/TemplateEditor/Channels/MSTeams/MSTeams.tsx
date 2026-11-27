@@ -1,3 +1,5 @@
+import { MSTeamsCardTextOnly } from "./msteamsCardTextOnly";
+import { MSTeamsButtonLabelLock } from "./msteamsButtonLabelLock";
 import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -15,6 +17,8 @@ import {
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { DropRules, setTrailingTypes } from "@/components/extensions/DropRules";
+import { useMSTeamsFormat, type MSTeamsFormat } from "./msteamsFormat";
 import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -172,6 +176,8 @@ export interface MSTeamsRenderProps {
   onUpdate: ({ editor }: { editor: Editor }) => void;
   items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
+  /** Clears the selection, as Email's render props do, e.g. on a click outside the canvas. */
+  setSelectedNode?: (node: Node | null) => void;
   msteamsEditor: Editor | null;
   textMenuConfig: TextMenuConfig;
 }
@@ -257,10 +263,26 @@ const msteamsDefaultConfig: TextMenuConfig = {
  * Get text menu configuration for an MS Teams node based on selection state
  * This function applies MS Teams-specific constraints while respecting text selection
  */
+const CARD_UNSUPPORTED_REASON =
+  "An Adaptive card can't show this. Switch to the Text message format in the MS Teams channel settings.";
+
+/** In an Adaptive card, quotes and headings would reach Teams as raw "> " and "#". */
+const withMSTeamsFormat = (config: TextMenuConfig, format: MSTeamsFormat): TextMenuConfig => {
+  if (format !== "adaptive_card") return config;
+  const disable = (item: TextMenuConfig["quote"]) =>
+    item && item.state !== "hidden"
+      ? { state: "disabled" as const, reason: CARD_UNSUPPORTED_REASON }
+      : item;
+  return { ...config, quote: disable(config.quote), contentType: disable(config.contentType) };
+};
+
 export const getTextMenuConfigForMSTeamsNode = (
   nodeName: string,
-  hasTextSelection: boolean = false
-): TextMenuConfig => {
+  hasTextSelection: boolean = false,
+  format: MSTeamsFormat = "text"
+): TextMenuConfig => withMSTeamsFormat(getBaseTextMenuConfig(nodeName, hasTextSelection), format);
+
+const getBaseTextMenuConfig = (nodeName: string, hasTextSelection: boolean): TextMenuConfig => {
   const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
 
   if (isTextNode && hasTextSelection) {
@@ -306,10 +328,11 @@ export const getTextMenuConfigForMSTeamsNode = (
         variable: { state: "enabled" },
         ...msteamsCommonConfigs,
       };
+    // An Adaptive Card action title is plain text, so label formatting would not be sent.
     case "button":
       return {
-        bold: { state: "enabled" },
-        italic: { state: "enabled" },
+        bold: { state: "hidden" },
+        italic: { state: "hidden" },
         ...msteamsCommonConfigs,
       };
     default:
@@ -349,6 +372,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
+    const { format } = useMSTeamsFormat();
     const isDragging = useAtomValue(isDraggingAtom);
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
@@ -409,13 +433,33 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       if (!selectedNode) {
         return msteamsDefaultConfig;
       }
-      return getTextMenuConfigForMSTeamsNode(selectedNode.type.name, hasTextSelection);
-    }, [selectedNode, hasTextSelection]);
+      return getTextMenuConfigForMSTeamsNode(selectedNode.type.name, hasTextSelection, format);
+    }, [selectedNode, hasTextSelection, format]);
+
+    // The format decides which blocks the live editor takes: an Adaptive card keeps buttons
+    // in a trailing row (and moves any to the end), refuses pasted dividers and turns pasted
+    // quotes into plain text; Text refuses pasted buttons. Both read these options at drop/paste time, so no editor rebuild.
+    useEffect(() => {
+      if (!templateEditor || templateEditor.isDestroyed) return;
+      const isCard = format === "adaptive_card";
+      const paste = templateEditor.extensionManager?.extensions.find(
+        (e) => e.name === MessagingChannelPaste.name
+      );
+      if (paste) {
+        paste.options.blockedNodeTypes = isCard ? ["divider", "imageBlock"] : ["button"];
+        paste.options.unwrapNodeTypes = isCard ? ["blockquote"] : [];
+      }
+      setTrailingTypes(templateEditor, isCard ? ["button"] : null);
+      const textOnly = templateEditor.extensionManager?.extensions.find(
+        (e) => e.name === MSTeamsCardTextOnly.name
+      );
+      if (textOnly) textOnly.options.enabled = isCard;
+    }, [templateEditor, format]);
 
     // Filter visible blocks to only include supported types for MSTeams
     const filteredVisibleBlocks = useMemo(() => {
       // MSTeams supports a subset of block types
-      const supportedBlocks: BlockElementType[] = ["text", "divider", "list"];
+      const supportedBlocks: BlockElementType[] = ["text", "divider", "button", "list"];
       const blocks = visibleBlocks.filter((block) => {
         const blockType = isPresetReference(block) ? block.type : block;
         return supportedBlocks.includes(blockType as BlockElementType);
@@ -586,10 +630,17 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             disableVariablesAutocomplete,
             textMarks: { underline: "disabled", strike: "disabled" },
           }),
-          MessagingChannelPaste.configure({
-            headingBehavior: "strip",
-            blockedNodeTypes: ["button"],
+          MessagingChannelPaste.configure({ headingBehavior: "strip" }),
+          // Teams sends every button in one row after the message, so they drop there.
+          // Trailing types follow the format (see the effect that sets them); buttons
+          // drag by the whole button, since a grip would sit on the next one in the row.
+          DropRules.configure({
+            wholeDragTypes: ["button"],
+            layoutTrailingDrop: true,
           }),
+          MSTeamsCardTextOnly,
+          // A button's label is edited in its sidebar form only.
+          MSTeamsButtonLabelLock,
           EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
       [
@@ -693,6 +744,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             onUpdate: onUpdateHandler,
             items,
             selectedNode,
+            setSelectedNode,
             msteamsEditor: templateEditor,
             textMenuConfig,
           })}

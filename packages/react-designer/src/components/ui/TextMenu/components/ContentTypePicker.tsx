@@ -17,6 +17,8 @@ export interface ContentTypePickerOption {
   isActive: () => boolean;
   onClick: () => void;
   icon?: keyof typeof ChevronDown;
+  /** Shown but not selectable, e.g. a heading in a Teams Adaptive card. */
+  blocked?: boolean;
 }
 
 export interface ContentTypePickerCategory {
@@ -64,6 +66,7 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
               <DropdownMenuItem
                 key={option.id}
                 onClick={option.onClick}
+                disabled={option.blocked}
                 className={option.isActive() ? "courier-bg-accent courier-text-foreground" : ""}
               >
                 {option.id.startsWith("heading") ? (

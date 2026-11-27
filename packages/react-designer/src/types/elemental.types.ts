@@ -168,6 +168,11 @@ export interface ElementalChannelNode extends IsElementalNode {
   type: "channel";
   channel: string;
   elements?: ElementalNode[];
+  /**
+   * MS Teams only. "adaptive_card" sends the message as one Adaptive Card with real buttons;
+   * missing or "text" sends markdown, with buttons as links.
+   */
+  message_format?: "text" | "adaptive_card";
   background_color?: string;
   content_body_color?: string;
   font_family?: string;
