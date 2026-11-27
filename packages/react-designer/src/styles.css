@@ -2494,6 +2494,11 @@
       display: none;
     }
   }
+
+  /* The button that left goes under "…", so the chip stays even when the 6th is last. */
+  &:has(> .node-button > .draggable-item[class~="courier-hidden"]) > .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) {
+    margin-right: 32px;
+  }
 }
 
 .courier-msteams-button-overflow {
