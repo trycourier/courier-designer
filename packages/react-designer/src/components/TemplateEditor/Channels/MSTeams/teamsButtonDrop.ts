@@ -71,15 +71,15 @@ const layOut = (row: HTMLElement, slots: Slot[], hasChip: boolean) => {
 /**
  * The drop a Teams button drag makes at this pointer, read off the row laid out without the
  * ghost: the ghost moves buttons and the "…" chip, and reading the row as shown would let it
- * move the drop, which moves the ghost back. "chip" over the chip's place in that layout;
- * over a button's left half the button lands before it, over its right half or past a
- * line's end after it, and below the last line after the last button. Null off the rows.
+ * move the drop, which moves the ghost back. Over a button's left half the button lands
+ * before it, over its right half, past a line's end or on the "…" chip's place after it,
+ * and below the last line after the last button. Null off the rows.
  */
 export const resolveTeamsButtonDrop = (
   editor: Editor,
   pointer: { x: number; y: number },
   sourceId: unknown
-): TrailingDropTarget | "chip" | null => {
+): TrailingDropTarget | null => {
   const row = editor.view?.dom as HTMLElement | undefined;
   if (!row || typeof document === "undefined") return null;
   const shown = shownButtons(editor, row, sourceId);
@@ -105,7 +105,7 @@ export const resolveTeamsButtonDrop = (
     const i = Math.min(MSTEAMS_VISIBLE_BUTTONS, shown.length) - 1;
     const chipLeft = slots[i].left + shown[i].width + SLOT_EXTRA;
     if (pointerLine === slots[i].line && x >= chipLeft - 4 && x <= chipLeft + CHIP_WIDTH + 4) {
-      return "chip";
+      return { id: shown[i].id ?? "", edge: "right" };
     }
   }
 

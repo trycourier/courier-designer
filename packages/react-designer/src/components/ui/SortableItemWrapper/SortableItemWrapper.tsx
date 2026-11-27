@@ -93,11 +93,13 @@ export const SortableItemWrapper = ({
       canMonitor: ({ source }) => currentSourceId(editor, source.data) === id,
       onDrag: ({ location }) => {
         const target = location.current.dropTargets[0]?.data as
-          | { id?: string; nodeType?: string }
+          | { id?: string; nodeType?: string; outOfRow?: boolean }
           | undefined;
         const kept = getLastTrailingTarget();
         setIsMovedAway(
-          (!!target && target.id !== id && isWholeDragType(editor, target.nodeType)) ||
+          (!!target &&
+            target.id !== id &&
+            (isWholeDragType(editor, target.nodeType) || !!target.outOfRow)) ||
             (!!kept && kept.id !== id)
         );
       },

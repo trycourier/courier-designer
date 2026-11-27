@@ -2470,8 +2470,22 @@
 
 /* Teams shows 6 buttons and puts the rest under a "…" menu (MSTeamsButtonOverflow): hide
  * those here, and leave room after the 6th for the chip (40px wide, 8px either side). */
-[data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror {
+[data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror:has(.courier-inline-drop-ghost) {
   & > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button {
+    &:has(~ .node-button) {
+      margin-right: 32px;
+    }
+
+    & ~ .node-button {
+      display: none;
+    }
+  }
+}
+
+/* With no ghost in the row, a dragged button that left it (dropped under "…") doesn't
+ * count: the first button under "…" moves up into the row, as the drop will do. */
+[data-msteams-format="adaptive_card"] .courier-msteams-editor .ProseMirror:not(:has(.courier-inline-drop-ghost)) {
+  & > .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) ~ .node-button:not(:has(> .draggable-item[class~="courier-hidden"])) {
     &:has(~ .node-button) {
       margin-right: 32px;
     }
@@ -2520,8 +2534,7 @@
     .ProseMirror > .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button ~ .node-button .courier-inline-drop-ghost[data-inline="after"]
   )
   .courier-msteams-button-overflow-chip,
-[data-trailing-drop] .courier-msteams-button-overflow-chip,
-.courier-msteams-button-overflow-chip-target {
+[data-trailing-drop] .courier-msteams-button-overflow-chip {
   outline: 2px dashed #0085ff !important;
   outline-offset: 2px;
 }
@@ -2574,11 +2587,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 12px;
+  box-sizing: border-box;
+  height: 34px;
+  padding: 0 12px;
   cursor: grab;
   font-size: 14px;
   text-align: left;
   white-space: nowrap;
+
+  /* Out of the list while a drag moves it up into the row. */
+  &[class~="courier-hidden"] {
+    display: none;
+  }
 
   &:hover {
     background: #f5f5f5;
@@ -2619,12 +2639,14 @@
 }
 
 /* Where a dragged button lands in the menu: a row the size of the others. */
+/* Rows and the placeholder share one height (MENU_ROW_HEIGHT), so a drop index maps to
+ * the row under the pointer and the placeholder takes exactly one row's room. */
 .courier-msteams-button-overflow-menu .courier-inline-drop-ghost {
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  height: 32px;
-  margin: 0 4px;
+  height: 34px !important;
+  margin: 0 4px !important;
   padding: 0 8px;
   border: 2px dashed #0085ff;
   border-radius: 4px;

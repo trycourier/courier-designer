@@ -165,18 +165,18 @@ export const MSTeamsEditor = ({
         setTrailingDrop(null);
         return;
       }
-      // The "…" chip and its menu place the drop themselves.
-      const overChip = location.current.dropTargets[0]?.data.insertPos !== undefined;
+      // The "…" menu places the drop itself.
+      const overMenu = location.current.dropTargets[0]?.data.insertPos !== undefined;
       const { clientX, clientY } = location.current.input;
       const name = draggedBlockLabel(editor, source.data);
-      const resolved = overChip
+      const resolved = overMenu
         ? null
         : resolveTeamsButtonDrop(editor, { x: clientX, y: clientY }, id);
-      // At the chip's place the chip takes the drop, once the row shows it there.
-      const drop = resolved === "chip" ? null : resolved;
-      setLastTrailingTarget(drop ? { ...drop, dragType: dragType ?? null, label: name } : null);
+      setLastTrailingTarget(
+        resolved ? { ...resolved, dragType: dragType ?? null, label: name } : null
+      );
       // Off the button rows, a new button from the sidebar ends the row; one being moved stays.
-      setTrailingDrop(!resolved && !overChip && type === "sidebar" ? (dragType ?? null) : null);
+      setTrailingDrop(!resolved && !overMenu && type === "sidebar" ? (dragType ?? null) : null);
     };
     const endDrag = () => {
       setTrailingDrop(null);
